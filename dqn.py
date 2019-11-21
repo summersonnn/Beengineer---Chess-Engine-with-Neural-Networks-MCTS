@@ -18,8 +18,6 @@ class DQN(nn.Module):
 		self.out = nn.Linear(in_features=16, out_features=4)
 
 	def forward(self, t):
-		t = (float(t[0]), float(t[1]))
-		t = torch.tensor(t)
 		t = t.flatten()
 		t = F.relu(self.fc1(t))
 		t = F.relu(self.fc2(t))

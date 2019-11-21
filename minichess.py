@@ -132,7 +132,7 @@ class MiniChess():
 		return torch.tensor([reward], device=self.device)
 
 	def get_state(self):
-		return torch.tensor([self.KingX, self.KingY])
+		return torch.tensor([self.KingX, self.KingY], dtype=torch.float)
 
 
 #Şah class'ıdır. Objesi, MiniChess clasının içinde oluşturulur. Şah objesi, MiniChess clasının bir elemanıdır.
