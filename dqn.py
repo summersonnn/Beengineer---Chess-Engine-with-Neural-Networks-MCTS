@@ -11,20 +11,19 @@ import minichess
 
 class DQN(nn.Module):
 	def __init__(self,):
-		super().__init__()
+		super(DQN, self).__init__()
 
 		self.fc1 = nn.Linear(in_features=2, out_features=12)
 		self.fc2 = nn.Linear(in_features=12, out_features=16)
 		self.out = nn.Linear(in_features=16, out_features=4)
 
 	def forward(self, t):
-		t = t.flatten()
 		t = F.relu(self.fc1(t))
 		t = F.relu(self.fc2(t))
 		t = self.out(t)
 		return t
 
-Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward'))
+Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'terminal'))
 
 class ReplayMemory():
 	def __init__(self, capacity):

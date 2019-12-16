@@ -21,7 +21,7 @@ class MiniChess():
 		self.ThreatedSquares = []
 		self.PossibleMoves = []
 		self.device = device
-		self.done = False
+		self.terminal = False
 
 	#Tahtayı başlangıç pozisyonuna getirir. Sonuç olarak, state number'ı döndürür.
 	def reset(self):
@@ -38,6 +38,7 @@ class MiniChess():
 
 		self.KingX = 7
 		self.KingY = 7
+		self.terminal = False
 		self.King.reset()
 
 		return self.KingX * 8 + self.KingY
@@ -47,7 +48,7 @@ class MiniChess():
 	def step(self, action):
 		self.board[self.KingX][self.KingY] = "X"
 		reward = 0
-		done = False
+		terminal = False
 
 		#Yukarı ise
 		if action == 0:
@@ -64,12 +65,12 @@ class MiniChess():
 
 		if self.KingX == 0:
 			reward += 100
-			done = True
+			terminal = True
 		else:
 			reward -= 1;
 
 
-		return self.KingX * 8 + self.KingY, reward, done
+		return self.KingX * 8 + self.KingY, reward, terminal
 
 	#Tehdit edilen kareler hesaplanıyor
 	def calculateThreatedSquares(self):
@@ -128,8 +129,8 @@ class MiniChess():
 
 	#Tensor coming in, tensor coming out
 	def take_action(self, action):
-		_, reward, self.done = self.step(action.item())
-		return torch.tensor([reward], device=self.device)
+		_, reward, self.terminal = self.step(action.item())
+		return torch.from_numpy(np.array([reward], dtype=np.float)).unsqueeze(0), self.terminal
 
 	def get_state(self):
 		return torch.tensor([self.KingX, self.KingY], dtype=torch.float)
