@@ -4,7 +4,9 @@ import torch.nn.functional as F
 import dqn
 import minichess
 import qvalues
+import fileoperations
 
+PATH_TO_DIRECTORY = "pretrained_model/"
 batch_size = 8 #make this smth like 256 when ready
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
@@ -22,11 +24,18 @@ strategy = dqn.EpsilonGreedyStrategy(eps_start, eps_end, eps_decay)
 agent = dqn.Agent(strategy, device)
 memory = dqn.ReplayMemory(memory_size)
 
+#Initialize net, optimizer and load them if exist.
 policy_net = dqn.DQN().to(device)
-#target_net = dqn.DQN().to(device)
-#target_net.load_state_dict(policy_net.state_dict())
-#target_net.eval()
 optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
+last_trained_model = fileoperations.find_last_edited_file(PATH_TO_DIRECTORY)
+if last_trained_model is not None:
+	print("This is the model I'm gonna use: -----" + last_trained_model)
+	checkpoint = torch.load(last_trained_model, map_location=device)
+	policy_net.load_state_dict(checkpoint['model_state_dict'])
+	optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+	past_episodes = checkpoint['episode']
+	loss = checkpoint['loss']
+	policy_net.train()
 
 steps_per_episode =[]	#counts how many steps played in each episode
 for episode in range(num_episodes):
@@ -79,11 +88,12 @@ for episode in range(num_episodes):
 		torch.save({ 'episode': episode,
             		'model_state_dict': policy_net.state_dict(),
             		'optimizer_state_dict': optimizer.state_dict(),
-            		'loss': loss, }, "pretrained_model/MiniChess trained model" + str(episode) + ".tar"
+            		'loss': loss, }, PATH_TO_DIRECTORY + "MiniChess trained model" + str(episode) + ".tar"
 					)
 		print("Steps per episode: " + str(steps_per_episode)+ '\n')	
 
 print("Evren dışı!")
+
 
 
 
