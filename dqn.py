@@ -51,35 +51,38 @@ class EpsilonGreedyStrategy():
 		self.end = end
 		self.decay = decay
 
+	#Exploration rate reduces as steps increase
 	def get_exploration_rate(self, current_step):
 		return self.end + (self.start - self.end) * math.exp(-1. * current_step * self.decay)
 
 class Agent():
 	def __init__(self, strategy, device):
 		self.current_step = 0
-		self.strategy = strategy
+		self.strategy = strategy #EpsilonGreedyStrategy object
 		self.device = device
 
 	def select_action(self, state, available_actions, policy_net):
 		rate = self.strategy.get_exploration_rate(self.current_step)
 		self.current_step += 1
 
+		#Explore
 		if rate > random.random():
-			action = random.choice(available_actions) #explore
+			action = random.choice(available_actions) 
 			return torch.tensor([action]).to(self.device)
 
+		#Exploit
 		else:
 			with torch.no_grad():
 				tensor_from_net = policy_net(state).to(self.device)  #.argmax()  #exploit
 				while (True):
-					max_index = tensor_from_net.argmax().item()
-					if max_index not in available_actions:
+					max_index = tensor_from_net.argmax()
+					#If illegal move is given as output by the model, punish that action and make it select an action again.
+					if max_index.item() not in available_actions:
 						number = tensor_from_net[max_index].item()
 						tensor_from_net[max_index] = torch.tensor(-100)
 					else:
 						break
-
-				return torch.tensor([tensor_from_net.argmax()])
+				return max_index.unsqueeze_(0)
 						
 
 

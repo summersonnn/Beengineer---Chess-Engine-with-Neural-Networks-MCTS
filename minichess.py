@@ -1,6 +1,13 @@
 import numpy as np 
 import random
 import torch
+import normalizer
+
+UP = 0
+DOWN = 1
+RIGHT = 2
+LEFT = 3
+normalizer = normalizer.MinMaxNormalizer(0,7)
 
 #MiniChess class'ı Board'ı temsil eder. 
 class MiniChess():
@@ -41,28 +48,27 @@ class MiniChess():
 		self.terminal = False
 		self.King.reset()
 
-		return self.KingX * 8 + self.KingY
+		return None
 
 	#Şah'a bir adım attırır ve tahtayı düzenler. Ayrıca Şah objesinin step fonksiyonunu çağırır ve onun da kendisini düzenlemesini sağlar.
-	#Action = Q-table'daki sütun indeksi. (Nereye ilerleyeceğini belirtir.)
 	def step(self, action):
-		self.board[self.KingX][self.KingY] = "X"
+		self.board[self.KingX][self.KingY] = "X"	#Şaha adım attırmadan önce bulunduğu yeri boşluk ile dolduruyoruz.
 		reward = 0
 		terminal = False
 
-		#Yukarı ise
-		if action == 0:
+		if action == UP:
 			self.KingX = self.KingX - 1
-		elif action == 1:
+		elif action == DOWN:
 			self.KingX = self.KingX + 1
-		elif action == 2:
+		elif action == RIGHT:
 			self.KingY = self.KingY + 1
-		elif action == 3:
+		elif action == LEFT:
 			self.KingY = self.KingY - 1
 
-		self.board[self.KingX][self.KingY] = "K"
-		self.King.step(self.KingX, self.KingY)
+		self.board[self.KingX][self.KingY] = "K"	#Şahın yeni konumuna notasyonunu ekliyoruz.
+		self.King.step(self.KingX, self.KingY)		#Şah objesine adım attırıyoruz.
 
+		#Şimdilik amacımız Şah'ın en üste çıkması olduğundan, X koordinatı 0 ise oyun biter.
 		if self.KingX == 0:
 			reward += 100
 			terminal = True
@@ -70,15 +76,15 @@ class MiniChess():
 			reward -= 1;
 
 
-		return self.KingX * 8 + self.KingY, reward, terminal
+		return None, reward, terminal
 
 	#Tehdit edilen kareler hesaplanıyor
 	def calculateThreatedSquares(self):
-		#Burada her bir siyah alet için hesap yapılacak. Şimdilik default pozisyondaki tehdit edilen kareleri hardcoded verelim.
+		#Burada her bir karşı alet için hesap yapılacak. Şimdilik default pozisyondaki tehdit edilen kareleri hardcoded verelim.
 		ThreatedSquares = [[3,4],[3,5],[3,6],[3,7]]
 		return ThreatedSquares
 
-	#Burada her bir beyaz alet için possible moves hesaplanacak. Şimdilik tek alet olan şah için hesaplanıyor.
+	#Burada her bir alet için possible moves hesaplanacak. Şimdilik tek alet olan şah için hesaplanıyor.
 	def calculatePossibleMoves(self):
 		self.ThreatedSquares = self.calculateThreatedSquares()
 		self.PossibleMoves = self.King.possibleMoves(self.ThreatedSquares)
@@ -99,25 +105,25 @@ class MiniChess():
 
 		for square in possibleMoves:
 			if square[0] == self.KingX - 1:
-				available_actions.append(0)
+				available_actions.append(UP)
 			elif square[0] == self.KingX + 1:
-				available_actions.append(1)
+				available_actions.append(DOWN)
 			elif square[1] == self.KingY + 1:
-				available_actions.append(2)
+				available_actions.append(RIGHT)
 			elif square[1] == self.KingY - 1: 
-				available_actions.append(3)
+				available_actions.append(LEFT)
 
 		return available_actions
 
 	def checkIfMoveable(self, action):
 		#Yukarı ise
-		if action == 0 and self.KingX - 1 >= 0:
+		if action == UP and self.KingX - 1 >= 0:
 			return True
-		elif action == 1 and self.KingX + 1 <= 7:
+		elif action == DOWN and self.KingX + 1 <= 7:
 			return True
-		elif action == 2 and self.KingY + 1 <=7:
+		elif action == RIGHT and self.KingY + 1 <=7:
 			return True
-		elif action == 3 and self.KingY - 1 >= 0:
+		elif action == LEFT and self.KingY - 1 >= 0:
 			return True
 
 		return False
@@ -133,7 +139,8 @@ class MiniChess():
 		return torch.from_numpy(np.array([reward], dtype=np.float)).unsqueeze(0), self.terminal
 
 	def get_state(self):
-		return torch.tensor([self.KingX, self.KingY], dtype=torch.float)
+		normalizedState = normalizer.normalize([self.KingX, self.KingY])
+		return torch.tensor(normalizedState, dtype=torch.float)
 
 
 #Şah class'ıdır. Objesi, MiniChess clasının içinde oluşturulur. Şah objesi, MiniChess clasının bir elemanıdır.
@@ -152,6 +159,7 @@ class King():
 		self.X = newX
 		self.Y = newY
 
+	#Legal hamlelerin koordinat ikililerinin listesini döndürür. Örn:  [[1,2], [1,3]]
 	def possibleMoves(self, ThreatedSquares):
 		#2d list to keep track of possile moves of the King
 		possibleMoves = []
@@ -189,11 +197,3 @@ class King():
 	def printPossibleMoves(self, ThreatedSquares):
 		moves = self.possibleMoves(ThreatedSquares)
 		print(moves)
-
-'''if __name__ == "__main__":
-	env = MiniChess()
-	moves = env.calculatePossibleMoves()
-
-	print (moves)
-
-	env.step(0,0)'''
