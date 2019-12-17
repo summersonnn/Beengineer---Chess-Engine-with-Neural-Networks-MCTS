@@ -1,3 +1,6 @@
+import os
+import signal
+import sys
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
@@ -5,6 +8,7 @@ import dqn
 import minichess
 import qvalues
 import fileoperations
+
 
 PATH_TO_DIRECTORY = "pretrained_model/"
 batch_size = 8 #make this smth like 256 when ready
@@ -18,81 +22,87 @@ lr = 0.001 #how much to change the model in response to the estimated error each
 num_episodes = 51
 max_steps_per_episode = 301
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-em = minichess.MiniChess(device)	#setting up the environment
-strategy = dqn.EpsilonGreedyStrategy(eps_start, eps_end, eps_decay) 
-agent = dqn.Agent(strategy, device)
-memory = dqn.ReplayMemory(memory_size)
+def train():
+	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+	em = minichess.MiniChess(device)	#setting up the environment
+	strategy = dqn.EpsilonGreedyStrategy(eps_start, eps_end, eps_decay) 
+	agent = dqn.Agent(strategy, device)
+	memory = dqn.ReplayMemory(memory_size)
 
-#Initialize net, optimizer and load them if exist.
-policy_net = dqn.DQN().to(device)
-optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
-last_trained_model = fileoperations.find_last_edited_file(PATH_TO_DIRECTORY)
-if last_trained_model is not None:
-	print("This is the model I'm gonna use: -----" + last_trained_model)
-	checkpoint = torch.load(last_trained_model, map_location=device)
-	policy_net.load_state_dict(checkpoint['model_state_dict'])
-	optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-	past_episodes = checkpoint['episode']
-	loss = checkpoint['loss']
-	policy_net.train()
+	#Initialize net, optimizer and load them if exist.
+	policy_net = dqn.DQN().to(device)
+	optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
+	past_episodes = 0
+	last_trained_model = fileoperations.find_last_edited_file(PATH_TO_DIRECTORY)
 
-steps_per_episode =[]	#counts how many steps played in each episode
-for episode in range(num_episodes):
-	print(episode)
-	em.reset()	#reset the environment to start all over again
-	state = em.get_state()	#get the first state from the environment as a tensor 
+	if last_trained_model is not None:
+		print("***Last trained model: " + last_trained_model)
+		checkpoint = torch.load(last_trained_model, map_location=device)
+		policy_net.load_state_dict(checkpoint['model_state_dict'])
+		optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+		past_episodes = checkpoint['episode']
+		loss = checkpoint['loss']
+		policy_net.train()
 
-	for step in range(max_steps_per_episode):
-		available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
-		action = agent.select_action(state, available_actions, policy_net)	#returns an action in tensor format
-		reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
-		next_state = em.get_state()	#get the new state 
-		memory.push(dqn.Experience(state, action, next_state, reward, terminal))	#push to replay memory
+	steps_per_episode =[]	#counts how many steps played in each episode
+	for episode in range(past_episodes, num_episodes + past_episodes):
+		print(episode)
+		em.reset()	#reset the environment to start all over again
+		state = em.get_state()	#get the first state from the environment as a tensor 
 
-		#Returns true if length of the memory is greater than or equal to batch_size
-		if memory.can_provide_sample(batch_size):
-			experiences = memory.sample(batch_size)	#sample experiences from memory
-			states, actions, rewards, next_states = qvalues.extract_tensors(experiences)	#extract them
+		for step in range(max_steps_per_episode):
+			available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
+			action = agent.select_action(state, available_actions, policy_net)	#returns an action in tensor format
+			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
+			next_state = em.get_state()	#get the new state 
+			memory.push(dqn.Experience(state, action, next_state, reward, terminal))	#push to replay memory
 
-			current_q_values = qvalues.QValues.get_current(policy_net, states, actions)	#get the current q values to calculate loss afterwards
-			# get output for the next state
-			next_states = policy_net(states)
+			#Returns true if length of the memory is greater than or equal to batch_size
+			if memory.can_provide_sample(batch_size):
+				experiences = memory.sample(batch_size)	#sample experiences from memory
+				states, actions, rewards, next_states = qvalues.extract_tensors(experiences)	#extract them
 
-			# set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q)
-			target_q_values = torch.cat(tuple(rewards[i].unsqueeze(0) if experiences[i][4]
-							else rewards[i].unsqueeze(0) + gamma * torch.max(next_states[i]).unsqueeze(0)
-							for i in range(len(experiences))))
-			
-			optimizer.zero_grad()	#clear the old gradients. we only focus on this batch. pytorch accumulates gradients in default.
-			# returns a new Tensor, detached from the current graph, the result will never require gradient
-			target_q_values = target_q_values.detach()
-			loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
-			
-			loss.backward()
-			optimizer.step()	#take a step based on the gradients
+				current_q_values = qvalues.QValues.get_current(policy_net, states, actions)	#get the current q values to calculate loss afterwards
+				# get output for the next state
+				next_states = policy_net(states)
 
+				# set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q)
+				target_q_values = torch.cat(tuple(rewards[i].unsqueeze(0) if experiences[i][4]
+								else rewards[i].unsqueeze(0) + gamma * torch.max(next_states[i]).unsqueeze(0)
+								for i in range(len(experiences))))
+				
+				optimizer.zero_grad()	#clear the old gradients. we only focus on this batch. pytorch accumulates gradients in default.
+				# returns a new Tensor, detached from the current graph, the result will never require gradient
+				target_q_values = target_q_values.detach()
+				loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
+				
+				loss.backward()
+				optimizer.step()	#take a step based on the gradients
 
-			state = next_state #go to next state which we calculated earlier
+				state = next_state #go to next state which we calculated earlier
 
-		#If we're in a terminal state, we never step in the terminal state. We end the episode instead.
-		#Record the step number.
-		if terminal:
-			steps_per_episode.append(step)
-			#print("Terminal! : " + str(step))
-			#print(state)
-			break
+			#If we're in a terminal state, we never step in the terminal state. We end the episode instead.
+			#Record the step number.
+			if terminal:
+				steps_per_episode.append(step)
+				#print("Terminal! : " + str(step))
+				#print(state)
+				break
 
-	if( episode % 10 == 0):
-		print("Episode:" + str(episode) + " -Weights are updated!")
-		torch.save({ 'episode': episode,
-            		'model_state_dict': policy_net.state_dict(),
-            		'optimizer_state_dict': optimizer.state_dict(),
-            		'loss': loss, }, PATH_TO_DIRECTORY + "MiniChess trained model" + str(episode) + ".tar"
-					)
-		print("Steps per episode: " + str(steps_per_episode)+ '\n')	
+		if( episode % 10 == 0):
+			print("Episode:" + str(episode) + " -Weights are updated!")
+			torch.save({ 'episode': episode,
+	            		'model_state_dict': policy_net.state_dict(),
+	            		'optimizer_state_dict': optimizer.state_dict(),
+	            		'loss': loss, }, PATH_TO_DIRECTORY + "MiniChess-trained-model" + str(episode) + ".tar"
+						)
+			print("Steps per episode: " + str(steps_per_episode)+ '\n')
+	return None
 
-print("Evren dışı!")
+if __name__ == '__main__':
+	train()
+	#sys.exit() or raise SystemExit doesn't work for some reason. That's the only way I could end the process.
+	os.kill(os.getpid(), signal.SIGTERM)
 
 
 
