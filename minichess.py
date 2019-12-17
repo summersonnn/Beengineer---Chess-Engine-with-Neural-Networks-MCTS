@@ -75,7 +75,6 @@ class MiniChess():
 		else:
 			reward -= 1;
 
-
 		return None, reward, terminal
 
 	#Tehdit edilen kareler hesaplanıyor
@@ -136,11 +135,14 @@ class MiniChess():
 	#Tensor coming in, tensor coming out
 	def take_action(self, action):
 		_, reward, self.terminal = self.step(action.item())
-		return torch.from_numpy(np.array([reward], dtype=np.float)).unsqueeze(0), self.terminal
+		return torch.from_numpy(np.array([reward], dtype=np.float32)).unsqueeze(0), self.terminal
 
 	def get_state(self):
 		normalizedState = normalizer.normalize([self.KingX, self.KingY])
-		return torch.tensor(normalizedState, dtype=torch.float)
+		return torch.tensor(normalizedState, dtype=torch.float32)
+
+	def get_unnormalized_state(self):
+		return [self.KingX, self.KingY]
 
 
 #Şah class'ıdır. Objesi, MiniChess clasının içinde oluşturulur. Şah objesi, MiniChess clasının bir elemanıdır.

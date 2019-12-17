@@ -1,6 +1,7 @@
 import os
 import signal
 import sys
+from matplotlib import pyplot as plt
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
@@ -11,7 +12,7 @@ import fileoperations
 
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 8 #make this smth like 256 when ready
+batch_size = 64 #make this smth like 256 when ready
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
@@ -45,12 +46,14 @@ def train():
 		policy_net.train()
 
 	steps_per_episode =[]	#counts how many steps played in each episode
-	for episode in range(past_episodes, num_episodes + past_episodes):
-		print(episode)
+	losses = []
+	flag = True
+	for episode in range(past_episodes + 1, num_episodes + past_episodes):
+		print("Episode number: " + str(episode))
 		em.reset()	#reset the environment to start all over again
 		state = em.get_state()	#get the first state from the environment as a tensor 
 
-		for step in range(max_steps_per_episode):
+		for step in range(1, max_steps_per_episode):
 			available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
 			action = agent.select_action(state, available_actions, policy_net)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
@@ -59,6 +62,9 @@ def train():
 
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
+				if ( flag ):
+					print("----------BATCHING-------")
+					flag = False
 				experiences = memory.sample(batch_size)	#sample experiences from memory
 				states, actions, rewards, next_states = qvalues.extract_tensors(experiences)	#extract them
 
@@ -71,11 +77,12 @@ def train():
 								else rewards[i].unsqueeze(0) + gamma * torch.max(next_states[i]).unsqueeze(0)
 								for i in range(len(experiences))))
 				
-				optimizer.zero_grad()	#clear the old gradients. we only focus on this batch. pytorch accumulates gradients in default.
+				#clear the old gradients. we only focus on this batch. pytorch accumulates gradients in default.
+				optimizer.zero_grad()	
 				# returns a new Tensor, detached from the current graph, the result will never require gradient
 				target_q_values = target_q_values.detach()
 				loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
-				
+				losses.append(loss)
 				loss.backward()
 				optimizer.step()	#take a step based on the gradients
 
@@ -96,7 +103,11 @@ def train():
 	            		'optimizer_state_dict': optimizer.state_dict(),
 	            		'loss': loss, }, PATH_TO_DIRECTORY + "MiniChess-trained-model" + str(episode) + ".tar"
 						)
-			print("Steps per episode: " + str(steps_per_episode)+ '\n')
+		print("Last state: " + str(em.get_unnormalized_state()))
+		print("Steps per episode: " + str(steps_per_episode)+ '\n')
+	plt.plot(losses)
+	plt.ylabel('Losses')
+	plt.show()
 	return None
 
 if __name__ == '__main__':

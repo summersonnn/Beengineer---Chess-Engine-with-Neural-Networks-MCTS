@@ -14,13 +14,13 @@ def extract_tensors(experiences):
 		#print(a)
 		state_batch += a
 
-	#print(state_batch)
-
-	state_batch = torch.tensor(state_batch, dtype=torch.float)
+	state_batch = torch.tensor(state_batch, dtype=torch.float32)
 	action_batch = torch.cat(tuple(d[1] for d in experiences))
-	reward_batch = torch.cat(tuple(d[2] for d in experiences))
-	nextState_batch = torch.cat(tuple(d[3] for d in experiences))
+	nextState_batch = torch.cat(tuple(d[2] for d in experiences))
+	reward_batch = torch.cat(tuple(d[3] for d in experiences))
+	
 
+	#print(reward_batch)
 	return (state_batch,action_batch,reward_batch,nextState_batch)
 
 class QValues():

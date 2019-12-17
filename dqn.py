@@ -78,7 +78,6 @@ class Agent():
 					max_index = tensor_from_net.argmax()
 					#If illegal move is given as output by the model, punish that action and make it select an action again.
 					if max_index.item() not in available_actions:
-						number = tensor_from_net[max_index].item()
 						tensor_from_net[max_index] = torch.tensor(-100)
 					else:
 						break
