@@ -12,12 +12,12 @@ import fileoperations
 
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 4 #make this smth like 256 when ready
+batch_size = 128 #make this smth like 256 when ready
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
-eps_decay = 0.001 #higher decay means exploration is LESS probable, exploitation is MORE LIKELY
-target_update = 20	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
+eps_decay = 0.001 #higher decay means faster reduction of exploration rate
+target_update = 10	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
 num_episodes = 501
@@ -53,6 +53,7 @@ def train(policy_net, target_net):
 		state = em.get_state()	#get the first state from the environment as a tensor 
 
 		for step in range(1, max_steps_per_episode):
+			#print("Humanistic state: " + str(em.get_humanistic_state()))
 			available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
 			action = agent.select_action(state, available_actions, policy_net)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
@@ -109,10 +110,9 @@ def train(policy_net, target_net):
 						)
 			print("Episode:" + str(episode) + " -Weights are updated!")
 
+		steps_per_episode.append(step)
 		print("Steps per episode: " + str(steps_per_episode)+ '\n')
-	plt.plot(losses)
-	plt.ylabel('Losses')
-	plt.show()
+		print("Average steps: " + str(sum(steps_per_episode) / len(steps_per_episode)))
 	return None
 
 if __name__ == '__main__':

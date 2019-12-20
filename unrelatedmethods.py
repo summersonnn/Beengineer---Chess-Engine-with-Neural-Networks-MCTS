@@ -21,7 +21,7 @@ def extract_tensors(experiences):
 	action_batch = torch.cat(tuple(d[1] for d in experiences))
 	nextState_batch = torch.tensor(nextState_batch, dtype=torch.float32)
 	reward_batch = torch.cat(tuple(d[3] for d in experiences))
-	
+
 	return (state_batch,action_batch,reward_batch,nextState_batch)
 
 

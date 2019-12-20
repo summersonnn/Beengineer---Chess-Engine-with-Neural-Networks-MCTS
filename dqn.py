@@ -13,7 +13,7 @@ class DQN(nn.Module):
 	def __init__(self,):
 		super(DQN, self).__init__()
 
-		self.fc1 = nn.Linear(in_features=2, out_features=12)
+		self.fc1 = nn.Linear(in_features=128, out_features=12)
 		self.fc2 = nn.Linear(in_features=12, out_features=16)
 		self.out = nn.Linear(in_features=16, out_features=4)
 
