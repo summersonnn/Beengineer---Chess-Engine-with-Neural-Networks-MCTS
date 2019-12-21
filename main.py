@@ -12,11 +12,11 @@ import fileoperations
 
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 128 #make this smth like 256 when ready
+batch_size = 256 
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
-eps_decay = 0.0005 #higher decay means faster reduction of exploration rate
+eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 10	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
@@ -24,7 +24,8 @@ num_episodes = 101
 max_steps_per_episode = 101
 
 def train(policy_net, target_net):
-	steps_per_episode =[]	#counts how many steps played in each episode
+	global loss
+	steps_per_episode = []	#counts how many steps played in each episode
 	for episode in range(past_episodes + 1, num_episodes + past_episodes):
 		print("Episode number: " + str(episode))
 		em.reset()	#reset the environment to start all over again
@@ -75,14 +76,15 @@ def train(policy_net, target_net):
 
 		#Update target network with weights and biases in the policy network
 		#Also create new model files
-		if( episode % target_update == 0):
+		if( episode % target_update == 0 ):
 			target_net.load_state_dict(policy_net.state_dict())
 			torch.save({ 'episode': episode,
 	            		'model_state_dict': policy_net.state_dict(),
 	            		'optimizer_state_dict': optimizer.state_dict(),
-	            		'loss': loss, }, PATH_TO_DIRECTORY + "MiniChess-trained-model" + str(episode) + ".tar"
+	            		'loss': loss,
+	            		'current_step': agent.current_step }, PATH_TO_DIRECTORY + "MiniChess-trained-model" + str(episode) + ".tar"
 						)
-			print("Episode:" + str(episode) + " -Weights are updated!")
+			print("Episode:" + str(episode) + " -------Weights are updated!")
 
 		steps_per_episode.append(step)
 		print("Exploration rate: " + str(agent.tell_me_exploration_rate()))
@@ -128,6 +130,8 @@ if __name__ == '__main__':
 			optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 			past_episodes = checkpoint['episode']
 			loss = checkpoint['loss']
+			agent.current_step = checkpoint['current_step']
+			#If you don't want to start exploration rate from where its left, delete the previous line.
 
 		#Weights and biases in the target net is same as in policy net. Target net will work in eval mode and will not update the weights (on its own)
 		target_net.load_state_dict(policy_net.state_dict())
@@ -141,6 +145,9 @@ if __name__ == '__main__':
 			print("***Last trained model: " + last_trained_model)
 			checkpoint = torch.load(last_trained_model, map_location=device)
 			policy_net.load_state_dict(checkpoint['model_state_dict'])
+		else:
+			print("Test cannot be done due to absence of weights file")
+			os.kill(os.getpid(), signal.SIGTERM)
 
 		#Policy net should be in eval mode to avoid gradient decent in test mode.
 		policy_net.eval()

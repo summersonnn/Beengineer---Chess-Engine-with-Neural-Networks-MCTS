@@ -92,10 +92,10 @@ class MiniChess():
 
 		#Şimdilik amacımız Şah'ın en üste çıkması olduğundan, X koordinatı 0 ise oyun biter.
 		if 	self.KingBitonBoard < 8:	#self.KingX == 0:
-			reward += 100
+			reward += 15
 			terminal = True
 		else:
-			reward -= 5;
+			reward -= 1;
 
 		return None, reward, terminal
 
