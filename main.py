@@ -132,6 +132,7 @@ if __name__ == '__main__':
 			past_episodes = checkpoint['episode']
 			loss = checkpoint['loss']
 			agent.current_step = checkpoint['current_step']
+			del checkpoint
 			#If you don't want to start exploration rate from where its left, delete the previous line.
 
 		#Weights and biases in the target net is same as in policy net. Target net will work in eval mode and will not update the weights (on its own)
@@ -146,6 +147,7 @@ if __name__ == '__main__':
 			print("***Last trained model: " + last_trained_model)
 			checkpoint = torch.load(last_trained_model, map_location=device)
 			policy_net.load_state_dict(checkpoint['model_state_dict'])
+			del checkpoint
 		else:
 			print("Test cannot be done due to absence of weights file")
 			os.kill(os.getpid(), signal.SIGTERM)
