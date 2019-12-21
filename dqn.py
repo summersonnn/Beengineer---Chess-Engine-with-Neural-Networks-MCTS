@@ -61,12 +61,14 @@ class Agent():
 		self.strategy = strategy #EpsilonGreedyStrategy object
 		self.device = device
 
-	def select_action(self, state, available_actions, policy_net):
-		rate = self.strategy.get_exploration_rate(self.current_step)
-		self.current_step += 1
+	def select_action(self, state, available_actions, policy_net, isTest):
+
+		if not isTest:
+			rate = self.strategy.get_exploration_rate(self.current_step)
+			self.current_step += 1
 
 		#Explore
-		if rate > random.random():
+		if not isTest and rate > random.random():
 			action = random.choice(available_actions) 
 			return torch.tensor([action]).to(self.device)
 
@@ -82,6 +84,13 @@ class Agent():
 					else:
 						break
 				return max_index.unsqueeze_(0)
+
+	def tell_me_exploration_rate(self):	#dummy function to observe exploration rate during training process
+		num = self.strategy.get_exploration_rate(self.current_step)
+		return "{:.3f}".format(num)
+
+		
+
 						
 
 

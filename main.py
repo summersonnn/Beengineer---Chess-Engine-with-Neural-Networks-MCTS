@@ -16,37 +16,15 @@ batch_size = 128 #make this smth like 256 when ready
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
-eps_decay = 0.001 #higher decay means faster reduction of exploration rate
+eps_decay = 0.0005 #higher decay means faster reduction of exploration rate
 target_update = 10	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 501
-max_steps_per_episode = 301
+num_episodes = 101
+max_steps_per_episode = 101
 
 def train(policy_net, target_net):
-	em = minichess.MiniChess(device)	#setting up the environment
-	strategy = dqn.EpsilonGreedyStrategy(eps_start, eps_end, eps_decay) 
-	agent = dqn.Agent(strategy, device)
-	memory = dqn.ReplayMemory(memory_size)
-
-	optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
-	past_episodes = 0	#how many episode is played before? this variable may be changed in the upcoming if block.
-	last_trained_model = fileoperations.find_last_edited_file(PATH_TO_DIRECTORY)	#Returns the last_trained model from multiple models.
-
-	if last_trained_model is not None:
-		print("***Last trained model: " + last_trained_model)
-		checkpoint = torch.load(last_trained_model, map_location=device)
-		policy_net.load_state_dict(checkpoint['model_state_dict'])
-		optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-		past_episodes = checkpoint['episode']
-		loss = checkpoint['loss']
-		
-	#Weights and biases in the target net is same as in policy net
-	target_net.load_state_dict(policy_net.state_dict())
-
 	steps_per_episode =[]	#counts how many steps played in each episode
-	losses = []
-	flag = True
 	for episode in range(past_episodes + 1, num_episodes + past_episodes):
 		print("Episode number: " + str(episode))
 		em.reset()	#reset the environment to start all over again
@@ -55,16 +33,13 @@ def train(policy_net, target_net):
 		for step in range(1, max_steps_per_episode):
 			#print("Humanistic state: " + str(em.get_humanistic_state()))
 			available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
-			action = agent.select_action(state, available_actions, policy_net)	#returns an action in tensor format
+			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
 			next_state = em.get_state()	#get the new state 
 			memory.push(dqn.Experience(state, action, next_state, reward, terminal))	#push to replay memory
 
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
-				if ( flag ):
-					print("----------BATCHING-------")
-					flag = False
 				experiences = memory.sample(batch_size)	#sample experiences from memory
 				states, actions, rewards, next_states = unrelatedmethods.extract_tensors(experiences)	#extract them
 
@@ -85,7 +60,6 @@ def train(policy_net, target_net):
 				# returns a new Tensor, detached from the current graph, the result will never require gradient
 				target_q_values = target_q_values.detach()
 				loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
-				losses.append(loss)
 				loss.backward()
 				optimizer.step()	#take a step based on the gradients
 
@@ -111,19 +85,67 @@ def train(policy_net, target_net):
 			print("Episode:" + str(episode) + " -Weights are updated!")
 
 		steps_per_episode.append(step)
+		print("Exploration rate: " + str(agent.tell_me_exploration_rate()))
 		print("Steps per episode: " + str(steps_per_episode)+ '\n')
 		print("Average steps: " + str(sum(steps_per_episode) / len(steps_per_episode)))
 	return None
 
+def test(policy_net):
+	state = em.get_state()	#get the first state from the environment as a tensor
+	steps = 0
+	while True:
+		available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
+		action = agent.select_action(state, available_actions, policy_net, True)	#returns an action in tensor format
+		reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
+		print("Humanistic state: " + str(em.get_humanistic_state()))
+		steps += 1
+		if terminal:
+			print("End - Steps: " + str(steps))
+			break;
+		next_state = em.get_state()	#get the new state 
+		state = next_state
+	return None
+
 if __name__ == '__main__':
-
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	#Initialize policy and target net. Target net will work in eval mode and will not update the weights (on its own)
+	#Initialize policy net and environment.
 	policy_net = dqn.DQN().to(device)
-	target_net = dqn.DQN().to(device)
-	target_net.eval()
+	em = minichess.MiniChess(device)
+	last_trained_model = fileoperations.find_last_edited_file(PATH_TO_DIRECTORY)	#Returns the last_trained model from multiple models.
+	
+	if (sys.argv[1]) == "train":
+		strategy = dqn.EpsilonGreedyStrategy(eps_start, eps_end, eps_decay) 
+		agent = dqn.Agent(strategy, device)
+		memory = dqn.ReplayMemory(memory_size)
+		optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
+		target_net = dqn.DQN().to(device)
+		past_episodes = 0	#how many episode is played before? this variable may be changed in the upcoming if block.
+		
+		if last_trained_model is not None:
+			print("***Last trained model: " + last_trained_model)
+			checkpoint = torch.load(last_trained_model, map_location=device)
+			policy_net.load_state_dict(checkpoint['model_state_dict'])
+			optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+			past_episodes = checkpoint['episode']
+			loss = checkpoint['loss']
 
-	train(policy_net, target_net)
+		#Weights and biases in the target net is same as in policy net. Target net will work in eval mode and will not update the weights (on its own)
+		target_net.load_state_dict(policy_net.state_dict())
+		target_net.eval()
+		train(policy_net, target_net)
+
+	elif (sys.argv[1]) == "test":
+		agent = dqn.Agent(None, device)	#strategy is none since epsilon greedy strategy is not required in test mode. We don't explore.
+
+		if last_trained_model is not None:
+			print("***Last trained model: " + last_trained_model)
+			checkpoint = torch.load(last_trained_model, map_location=device)
+			policy_net.load_state_dict(checkpoint['model_state_dict'])
+
+		#Policy net should be in eval mode to avoid gradient decent in test mode.
+		policy_net.eval()
+		test(policy_net)
+
 	#sys.exit() or raise SystemExit doesn't work for some reason. That's the only way I could end the process.
 	os.kill(os.getpid(), signal.SIGTERM)
 
