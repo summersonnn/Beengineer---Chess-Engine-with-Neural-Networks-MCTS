@@ -60,7 +60,8 @@ def train(policy_net, target_net):
 				optimizer.zero_grad()	
 				# returns a new Tensor, detached from the current graph, the result will never require gradient
 				target_q_values = target_q_values.detach()
-				loss = F.mse_loss(current_q_values, target_q_values.unsqueeze(1))
+				
+				loss = F.mse_loss(current_q_values, target_q_values)
 				loss.backward()
 				optimizer.step()	#take a step based on the gradients
 
