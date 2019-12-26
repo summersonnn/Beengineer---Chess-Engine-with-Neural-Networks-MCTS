@@ -36,7 +36,7 @@ def train(policy_net, target_net):
 			available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
 			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
-			next_state = em.get_state()	#get the new state 
+			next_state = em.get_state()	#get the new state
 			memory.push(dqn.Experience(state, action, next_state, reward, terminal))	#push to replay memory
 
 			#Returns true if length of the memory is greater than or equal to batch_size

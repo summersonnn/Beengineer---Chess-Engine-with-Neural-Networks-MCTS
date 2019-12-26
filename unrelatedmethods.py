@@ -9,11 +9,11 @@ def extract_tensors(experiences):
 
 	for d in experiences:
 		#for state batch
-		a = d[0].cpu().detach().numpy()
+		a = d[0].numpy()
 		a = [a]
 		state_batch += a
 		#for nextState batch
-		b = d[2].cpu().detach().numpy()
+		b = d[2].numpy()
 		b = [b]
 		nextState_batch += b
 
