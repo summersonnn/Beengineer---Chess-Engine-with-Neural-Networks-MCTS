@@ -12,15 +12,15 @@ import fileoperations
 
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 256 
+batch_size = 2 
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
-eps_end = 0.01	#minimum exploration rate
+eps_end = 0.1	#minimum exploration rate
 eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
-lr = 0.005 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 101
+lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
+num_episodes = 501
 max_steps_per_episode = 101
 
 def train(policy_net, target_net):
@@ -37,7 +37,11 @@ def train(policy_net, target_net):
 			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
 			next_state = em.get_state()	#get the new state
-			memory.push(dqn.Experience(state, action, next_state, reward, terminal))	#push to replay memory
+
+			#increase their sizes and push to replay memory. Sizes of st and nst have been increased in order to concatenate them in extract_tensors more easily.
+			state = state.unsqueeze(0)
+			next_state = next_state.unsqueeze(0)
+			memory.push(dqn.Experience(state, action, next_state, reward, terminal))	
 
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
@@ -65,7 +69,7 @@ def train(policy_net, target_net):
 				loss.backward()
 				optimizer.step()	#take a step based on the gradients
 
-				state = next_state #go to next state which we calculated earlier
+			state = next_state.squeeze(0) #go to next state which we calculated earlier
 
 			#If we're in a terminal state, we never step in the terminal state. We end the episode instead.
 			#Record the step number.
@@ -89,7 +93,7 @@ def train(policy_net, target_net):
 
 		steps_per_episode.append(step)
 		print("Exploration rate: " + str(agent.tell_me_exploration_rate()))
-		print("Steps per episode: " + str(steps_per_episode)+ '\n')
+		print("Steps per episode: " + str(steps_per_episode[-10:])+ '\n')
 		print("Average steps: " + str(sum(steps_per_episode) / len(steps_per_episode)))
 	return None
 
