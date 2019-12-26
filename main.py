@@ -17,9 +17,9 @@ gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same a
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
 eps_decay = 0.001 #higher decay means faster reduction of exploration rate
-target_update = 10	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
+target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
-lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
+lr = 0.005 #how much to change the model in response to the estimated error each time the model weights are updated
 num_episodes = 101
 max_steps_per_episode = 101
 
@@ -53,7 +53,7 @@ def train(policy_net, target_net):
 
 				# set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q). Garbage q-values for terminal states are not used.
 				target_q_values = torch.cat(tuple(rewards[i].unsqueeze(0) if experiences[i][4]
-								else rewards[i].unsqueeze(0) + gamma * torch.max(next_states[i]).unsqueeze(0)
+								else rewards[i].unsqueeze(0) + gamma * torch.max(next_q_values[i]).unsqueeze(0)
 								for i in range(len(experiences))))
 				
 				#clear the old gradients. we only focus on this batch. pytorch accumulates gradients in default.
