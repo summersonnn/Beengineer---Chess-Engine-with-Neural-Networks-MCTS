@@ -13,13 +13,15 @@ class DQN(nn.Module):
 	def __init__(self,):
 		super(DQN, self).__init__()
 
-		self.fc1 = nn.Linear(in_features=128, out_features=12)
-		self.fc2 = nn.Linear(in_features=12, out_features=16)
-		self.out = nn.Linear(in_features=16, out_features=4)
+		self.fc1 = nn.Linear(in_features=128, out_features=64)
+		self.fc2 = nn.Linear(in_features=64, out_features=32)
+		self.fc3 = nn.Linear(in_features=32, out_features=16)
+		self.out = nn.Linear(in_features=16, out_features=8)
 
 	def forward(self, t):
 		t = F.relu(self.fc1(t))
 		t = F.relu(self.fc2(t))
+		t = F.relu(self.fc3(t))
 		t = self.out(t)
 		return t
 
@@ -85,7 +87,7 @@ class Agent():
 						break
 				return max_index.unsqueeze_(0)
 
-	def tell_me_exploration_rate(self):	#dummy function to observe exploration rate during training process
+	def tell_me_exploration_rate(self):	#debug function to observe exploration rate during training process
 		num = self.strategy.get_exploration_rate(self.current_step)
 		return "{:.3f}".format(num)
 

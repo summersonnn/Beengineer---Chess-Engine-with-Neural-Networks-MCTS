@@ -12,16 +12,16 @@ import fileoperations
 
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 2 
+batch_size = 256 
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
-eps_end = 0.1	#minimum exploration rate
+eps_end = 0.01	#minimum exploration rate
 eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
 num_episodes = 501
-max_steps_per_episode = 101
+max_steps_per_episode = 501
 
 def train(policy_net, target_net):
 	global loss
