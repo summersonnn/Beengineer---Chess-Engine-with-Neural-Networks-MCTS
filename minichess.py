@@ -17,26 +17,42 @@ UP_LEFT = 7
 class MiniChess():
 	def __init__(self, device):
 		self.board =  	[
-							["X", "X", "X", "X", "X", "X", "X", "X"],
-							["X", "X", "X", "X", "X", "X", "X", "X"],
-							["X", "X", "X", "X", "X", "P", "P", "P"],
-							["X", "X", "X", "X", "X", "X", "X", "X"],
-							["X", "X", "X", "X", "X", "X", "X", "X"],
-							["X", "X", "X", "X", "X", "X", "X", "X"],
-							["X", "X", "X", "X", "X", "X", "X", "X"],
-							["X", "X", "X", "X", "X", "X", "X", "K"],
+							["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],
+							["-P", "-P", "-P", "-P", "-P", "-P", "-P", "-P"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["+P", "+P", "+P", "+P", "+P", "+P", "+P", "+P"],
+							["+R", "+N", "+B", "+Q", "+K", "+B", "+N", "+R"],
 						]
-		self.bitVectorBoard = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		#20
+		self.bitVectorBoard = [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		#20
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,	#64 (dost şah)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-							0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]	#128 (rakip piyon)
-		self.KingBitonBoard = 63
-		self.KingX = 7
-		self.KingY = 7
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,	#64 (şahlar)
+								0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,		
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,	#64-128 (piyonlar)
+								1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,		
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,	#128-192 (kaleler)
+								0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,	#192-256 (atlar)
+								0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,	#256-320 (filler)
+								0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#320-384 (vezirler)
+		self.BlackKingBitonBoard = 4
+		self.WhiteKingBitonBoard = 60
+		self.BlackKingX = 0
+		self.BlackKingY = 5
+		self.WhiteKingX = 7
+		self.WhiteKingY = 5
 		self.available_actions = []
-		self.King = King()
+		self.BlackKing = King("black")
+		self.WhiteKing = King("white")
 		self.ThreatedSquares = []
 		self.PossibleMoves = []
 		self.device = device
@@ -45,73 +61,91 @@ class MiniChess():
 	#Tahtayı başlangıç pozisyonuna getirir. Sonuç olarak, state number'ı döndürür.
 	def reset(self):
 		self.board =  	[
-						["X", "X", "X", "X", "X", "X", "X", "X"],
-						["X", "X", "X", "X", "X", "X", "X", "X"],
-						["X", "X", "X", "X", "X", "P", "P", "P"],
-						["X", "X", "X", "X", "X", "X", "X", "X"],
-						["X", "X", "X", "X", "X", "X", "X", "X"],
-						["X", "X", "X", "X", "X", "X", "X", "X"],
-						["X", "X", "X", "X", "X", "X", "X", "X"],
-						["X", "X", "X", "X", "X", "X", "X", "K"],
-					]
-		self.bitVectorBoard = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		#20
+							["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],
+							["-P", "-P", "-P", "-P", "-P", "-P", "-P", "-P"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["XX", "XX", "XX", "XX", "XX", "XX", "XX", "XX"],
+							["+P", "+P", "+P", "+P", "+P", "+P", "+P", "+P"],
+							["+R", "+N", "+B", "+Q", "+K", "+B", "+N", "+R"],
+						]
+		self.bitVectorBoard = [0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,		#20
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,	#64 (dost şah)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-							0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]	#128 (rakip piyon)
-		self.KingBitonBoard = 63
-		self.KingX = 7
-		self.KingY = 7
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,	#64 (şahlar)
+								0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,		
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,	#64-128 (piyonlar)
+								1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,		
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,	#128-192 (kaleler)
+								0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,	#192-256 (atlar)
+								0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,	#256-320 (filler)
+								0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#320-384 (vezirler)
+		self.BlackKingBitonBoard = 4
+		self.WhiteKingBitonBoard = 60
+		self.BlackKingX = 0
+		self.BlackKingY = 5
+		self.WhiteKingX = 7
+		self.WhiteKingY = 5
 		self.available_actions = []
+		self.BlackKing.reset()
+		self.WhiteKing.reset()
+		self.ThreatedSquares = []
+		self.PossibleMoves = []
 		self.terminal = False
-		self.King.reset()
 
 		return None
 
 	#Şah'a bir adım attırır ve tahtayı düzenler. Ayrıca Şah objesinin step fonksiyonunu çağırır ve onun da kendisini düzenlemesini sağlar.
 	def step(self, action):
-		self.board[self.KingX][self.KingY] = "X"	#Şaha adım attırmadan önce bulunduğu yeri boşluk ile dolduruyoruz.
+		self.board[self.KingX][self.KingY] = "XX"	#Şaha adım attırmadan önce bulunduğu yeri boşluk ile dolduruyoruz.
 		self.bitVectorBoard[self.KingBitonBoard] = 0
 
 		reward = 0
 		terminal = False
 
 		if action == UP:
-			self.KingX = self.KingX - 1
-			self.KingBitonBoard -= 8
+			self.WhiteKingX = self.WhiteKingX - 1
+			self.WhiteKingBitonBoard -= 8
 		elif action == DOWN:
-			self.KingX = self.KingX + 1
-			self.KingBitonBoard += 8
+			self.WhiteKingX = self.WhiteKingX + 1
+			self.WhiteKingBitonBoard += 8
 		elif action == RIGHT:
-			self.KingY = self.KingY + 1
-			self.KingBitonBoard += 1
+			self.WhiteKingY = self.WhiteKingY + 1
+			self.WhiteKingBitonBoard += 1
 		elif action == LEFT:
-			self.KingY = self.KingY - 1
-			self.KingBitonBoard -= 1
+			self.WhiteKingY = self.WhiteKingY - 1
+			self.WhiteKingBitonBoard -= 1
 		elif action == UP_RIGHT:
-			self.KingX = self.KingX - 1
-			self.KingY = self.KingY + 1
-			self.KingBitonBoard -= 7
+			self.WhiteKingX = self.WhiteKingX - 1
+			self.WhiteKingY = self.WhiteKingY + 1
+			self.WhiteKingBitonBoard -= 7
 		elif action == DOWN_RIGHT:
-			self.KingX = self.KingX + 1
-			self.KingY = self.KingY + 1
-			self.KingBitonBoard += 9
+			self.WhiteKingX = self.WhiteKingX + 1
+			self.WhiteKingY = self.WhiteKingY + 1
+			self.WhiteKingBitonBoard += 9
 		elif action == DOWN_LEFT:
-			self.KingX = self.KingX + 1
-			self.KingY = self.KingY - 1
-			self.KingBitonBoard += 7
+			self.WhiteKingX = self.WhiteKingX + 1
+			self.WhiteKingY = self.WhiteKingY - 1
+			self.WhiteKingBitonBoard += 7
 		elif action == UP_LEFT:
-			self.KingX = self.KingX - 1
-			self.KingY = self.KingY - 1
-			self.KingBitonBoard -= 9
+			self.WhiteKingX = self.WhiteKingX - 1
+			self.WhiteKingY = self.WhiteKingY - 1
+			self.WhiteKingBitonBoard -= 9
 
-		self.board[self.KingX][self.KingY] = "K"	#Şahın yeni konumuna notasyonunu ekliyoruz.
-		self.bitVectorBoard[self.KingBitonBoard] = 1
-		self.King.step(self.KingBitonBoard)		#Şah objesine adım attırıyoruz.
+		self.board[self.WhiteKingX][self.WhiteKingY] = "K"	#Şahın yeni konumuna notasyonunu ekliyoruz.
+		self.bitVectorBoard[self.WhiteKingBitonBoard] = 1
+		self.WhiteKing.step(self.WhiteKingBitonBoard)		#Şah objesine adım attırıyoruz.
 
 		#Şimdilik amacımız Şah'ın en üste çıkması olduğundan, X koordinatı 0 ise oyun biter.
-		if 	self.KingBitonBoard < 8:	#self.KingX == 0:
+		if 	self.WhiteKingBitonBoard < 8:	#self.WhiteKingX == 0:
 			reward += 10000
 			terminal = True
 		else:
@@ -122,7 +156,7 @@ class MiniChess():
 	#Tehdit edilen kareler hesaplanıyor
 	def calculateThreatedSquares(self):
 		#Burada her bir karşı alet için hesap yapılacak. Şimdilik default pozisyondaki tehdit edilen kareleri hardcoded verelim.
-		ThreatedSquares = [28, 29, 30, 31]		#[[3,4],[3,5],[3,6],[3,7]]
+		ThreatedSquares = [16, 17, 18, 19, 20, 21, 22, 23]	
 		return ThreatedSquares
 
 	#Burada her bir alet için possible moves hesaplanacak. Şimdilik tek alet olan şah için hesaplanıyor.
@@ -137,24 +171,10 @@ class MiniChess():
 			for j in range(8):
 				print(self.board[i][j], end=" ")
 			print(" ")
-		print("King's Position : " + str(self.KingX) + "," + str(self.KingY))
 
 	def calculate_available_actions(self):
 		possibleMoves = self.calculatePossibleMoves()
 		return self.available_actions
-
-	'''def checkIfMoveable(self, action):
-		#Yukarı ise
-		if action == UP and self.KingBitonBoard > 7:
-			return True
-		elif action == DOWN and self.KingBitonBoard < 56:
-			return True
-		elif action == RIGHT and (self.KingBitonBoard + 1) % 8 != 0:
-			return True
-		elif action == LEFT and self.KingBitonBoard % 8 != 0:
-			return True
-
-		return False'''
 
 	#Tensor coming in, tensor coming out
 	def take_action(self, action):
@@ -166,17 +186,26 @@ class MiniChess():
 		return torch.tensor(self.bitVectorBoard, dtype=torch.float32)
 
 	def get_humanistic_state(self):
-		return [self.KingX, self.KingY]
+		return [self.WhiteKingX, self.WhiteKingY]
 
 
 #Şah class'ıdır. Objesi, MiniChess clasının içinde oluşturulur. Şah objesi, MiniChess clasının bir elemanıdır.
 class King():
-	def __init__(self):
-		self.notation = "K"
-		self.KingBitonBoard = 63
+	def __init__(self, color):
+		self.color = color
+
+		if color == "white":
+			self.notation = "+K"
+			self.KingBitonBoard = 60
+		elif color == "black":
+			self.notation = "-K"
+			self.KingBitonBoard = 4
 
 	def reset(self):
-		self.KingBitonBoard = 63
+		if self.color == "white":
+			self.KingBitonBoard = 60
+		elif self.color == "black":
+			self.KingBitonBoard = 4
 
 	#MiniChess'teki step fonksiyonu tarafından çağrılır. Şah'ın pozisyonunu düzenler.
 	def step(self, KingBitonBoard):
@@ -218,9 +247,6 @@ class King():
 
 		return possibleMoves, available_actions
 
-	def print(self):
-		print("King's Position : " + str(self.X) + "," + str(self.Y))
-		print("In bitboard: " + str(self.KingBitonBoard))
 
 	def printPossibleMoves(self, ThreatedSquares):
 		moves = self.possibleMoves(ThreatedSquares)

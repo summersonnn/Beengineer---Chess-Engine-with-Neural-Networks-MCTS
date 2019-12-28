@@ -13,10 +13,10 @@ class DQN(nn.Module):
 	def __init__(self,):
 		super(DQN, self).__init__()
 
-		self.fc1 = nn.Linear(in_features=128, out_features=64)
-		self.fc2 = nn.Linear(in_features=64, out_features=32)
-		self.fc3 = nn.Linear(in_features=32, out_features=16)
-		self.out = nn.Linear(in_features=16, out_features=8)
+		self.fc1 = nn.Linear(in_features=384, out_features=192)
+		self.fc2 = nn.Linear(in_features=192, out_features=96)
+		self.fc3 = nn.Linear(in_features=96, out_features=48)
+		self.out = nn.Linear(in_features=48, out_features=8)
 
 	def forward(self, t):
 		t = F.relu(self.fc1(t))
