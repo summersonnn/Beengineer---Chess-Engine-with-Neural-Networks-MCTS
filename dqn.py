@@ -13,15 +13,20 @@ class DQN(nn.Module):
 	def __init__(self,):
 		super(DQN, self).__init__()
 
-		self.fc1 = nn.Linear(in_features=384, out_features=192)
-		self.fc2 = nn.Linear(in_features=192, out_features=96)
-		self.fc3 = nn.Linear(in_features=96, out_features=48)
-		self.out = nn.Linear(in_features=48, out_features=8)
+		self.fc1 = nn.Linear(in_features=768, out_features=384)
+		self.fc2 = nn.Linear(in_features=384, out_features=192)
+		self.fc3 = nn.Linear(in_features=192, out_features=96)
+		self.fc4 = nn.Linear(in_features=96, out_features=48)
+		self.fc5 = nn.Linear(in_features=48, out_features=24)
+		self.out = nn.Linear(in_features=24, out_features=8)
+		#In real chess, there will be 3876 possible moves, so probably 3876 neurons at the final layer
 
 	def forward(self, t):
 		t = F.relu(self.fc1(t))
 		t = F.relu(self.fc2(t))
 		t = F.relu(self.fc3(t))
+		t = F.relu(self.fc4(t))
+		t = F.relu(self.fc5(t))
 		t = self.out(t)
 		return t
 

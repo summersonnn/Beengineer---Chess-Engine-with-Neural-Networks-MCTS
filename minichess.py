@@ -62,7 +62,9 @@ class MiniChess():
 								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#704-768 (beyaz vezir)
-							
+
+		#Colour, Totalmovecount, P1-castling, P2-castling, No-progress count sonradan eklenecek
+
 		self.BlackKingBitonBoard = 4
 		self.WhiteKingBitonBoard = 60
 		self.BlackKingX = 0
