@@ -10,7 +10,23 @@ import minichess
 
 
 class DQN(nn.Module):
+
 	def __init__(self,):
+		super(DQN, self).__init__()
+
+		self.fc1 = nn.Linear(in_features=108, out_features=132)
+		self.fc2 = nn.Linear(in_features=132, out_features=192)
+		self.fc3 = nn.Linear(in_features=192, out_features=216)
+		self.out = nn.Linear(in_features=216, out_features=251)
+
+	def forward(self, t):
+		t = F.relu(self.fc1(t))
+		t = F.relu(self.fc2(t))
+		t = F.relu(self.fc3(t))
+		t = self.out(t)
+		return t
+
+	'''def __init__(self,):
 		super(DQN, self).__init__()
 
 		self.fc1 = nn.Linear(in_features=768, out_features=384)
@@ -28,7 +44,7 @@ class DQN(nn.Module):
 		t = F.relu(self.fc4(t))
 		t = F.relu(self.fc5(t))
 		t = self.out(t)
-		return t
+		return t'''
 
 Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'terminal'))
 
