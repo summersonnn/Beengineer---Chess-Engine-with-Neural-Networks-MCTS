@@ -96,10 +96,13 @@ class MiniChess():
 		self.White_A_Pawn = Pawn("white", 3)
 		self.White_B_Pawn = Pawn("white", 4)
 		self.White_C_Pawn = Pawn("white", 5)
+		self.Black_A_Rook = Rook("black", 0)
+		self.Black_C_Rook = Rook("black", 1)
+		self.White_A_Rook = Rook("white", 2)
+		self.White_C_Rook = Rook("white", 3)
 
 		self.available_actions = []
 		self.ThreatedSquares = []
-		self.PossibleMoves = []
 		self.device = device
 		self.terminal = False
 
@@ -179,7 +182,6 @@ class MiniChess():
 		self.BlackKing.reset()
 		self.WhiteKing.reset()
 		self.ThreatedSquares = []
-		self.PossibleMoves = []
 		self.terminal = False
 
 		return None
@@ -242,10 +244,10 @@ class MiniChess():
 		return ThreatedSquares
 
 	#Burada her bir alet için possible moves hesaplanacak. Şimdilik tek alet olan şah için hesaplanıyor.
-	def calculatePossibleMoves(self):
+	'''def calculatePossibleMoves(self):
 		self.ThreatedSquares = self.calculateThreatedSquares()
 		self.PossibleMoves, self.available_actions = self.King.possibleMoves(self.ThreatedSquares)
-		return self.PossibleMoves
+		return self.PossibleMoves'''
 
 	#Tahtayı yazdırır.
 	def print(self):
@@ -256,8 +258,23 @@ class MiniChess():
 
 	#Main'den ilk bu çağrılır
 	#Sıra: C_A_A -> C_P_M -> King.P_M
-	def calculate_available_actions(self):
-		possibleMoves = self.calculatePossibleMoves()
+	def calculate_available_actions(self, forColor):
+		self.ThreatedSquares = self.calculateThreatedSquares()
+		
+		if forColor == "white":
+			self.available_actions = self.WhiteKing.possibleActions(self.ThreatedSquares)
+			self.available_actions += self.White_A_Pawn.possibleActions()
+			self.available_actions += self.White_B_Pawn.possibleActions()
+			self.available_actions += self.White_C_Pawn.possibleActions()
+			self.available_actions += self.White_A_Rook.possibleActions()
+			self.available_actions += self.White_C_Rook.possibleActions()
+		elif forColor == "black":
+			self.available_actions = self.BlackKing.possibleActions(self.ThreatedSquares)
+			self.available_actions += self.Black_A_Pawn.possibleActions()
+			self.available_actions += self.Black_B_Pawn.possibleActions()
+			self.available_actions += self.Black_C_Pawn.possibleActions()
+			self.available_actions += self.Black_A_Rook.possibleActions()
+			self.available_actions += self.Black_C_Rook.possibleActions()
 		return self.available_actions
 
 	#Tensor coming in, tensor coming out
@@ -305,9 +322,7 @@ class King():
 		self.KingX = newX
 		self.KingY = newY
 
-	def possibleMoves(self, ThreatedSquares):
-		#2d list to keep track of possile moves of the King
-		possibleMoves = []
+	def possibleActions(self, ThreatedSquares):
 		available_actions = []
 		top = False
 		bottom = False
@@ -315,30 +330,30 @@ class King():
 
 		#Üst kontrol
 		if 	self.KingBitonBoard > 2 :	#Tek renk şah için çalışır durumda. Diğer şahın bit aralık değerleri farklı olacak.
-			possibleMoves.append(self.KingBitonBoard - 3) or available_actions.append(UP) if (self.KingBitonBoard - 3) not in ThreatedSquares else 1==1
+			available_actions.append(UP) if (self.KingBitonBoard - 3) not in ThreatedSquares else 1==1
 			top = True
 		#Sağ Kontrol
 		if 	(self.KingBitonBoard + 1) % 3 != 0:		#self.Y + 1 <= 7:
-			possibleMoves.append(self.KingBitonBoard + 1) or available_actions.append(RIGHT) if (self.KingBitonBoard + 1) not in ThreatedSquares else 1==1
+			available_actions.append(RIGHT) if (self.KingBitonBoard + 1) not in ThreatedSquares else 1==1
 			right = True
 			if top:	#Sag-ust
-				possibleMoves.append(self.KingBitonBoard - 2) or available_actions.append(UP_RIGHT) if (self.KingBitonBoard - 2) not in ThreatedSquares else 1==1
+				available_actions.append(UP_RIGHT) if (self.KingBitonBoard - 2) not in ThreatedSquares else 1==1
 		#Alt Kontrol
 		if 	self.KingBitonBoard < 15:		#self.X + 1 <= 7:
-			possibleMoves.append(self.KingBitonBoard + 3) or available_actions.append(DOWN) if (self.KingBitonBoard + 3) not in ThreatedSquares else 1==1
+			available_actions.append(DOWN) if (self.KingBitonBoard + 3) not in ThreatedSquares else 1==1
 			bottom = True
 			if right:	#Sag-alt
-				possibleMoves.append(self.KingBitonBoard + 4) or available_actions.append(DOWN_RIGHT) if (self.KingBitonBoard + 4) not in ThreatedSquares else 1==1
+				available_actions.append(DOWN_RIGHT) if (self.KingBitonBoard + 4) not in ThreatedSquares else 1==1
 		#Sol Kontrol
 		if 	self.KingBitonBoard % 3 != 0:		#self.Y - 1 >= 0:
-			possibleMoves.append(self.KingBitonBoard - 1) or available_actions.append(LEFT) if (self.KingBitonBoard - 1) not in ThreatedSquares else 1==1
+			available_actions.append(LEFT) if (self.KingBitonBoard - 1) not in ThreatedSquares else 1==1
 			if top:	#Sol-üst
-				possibleMoves.append(self.KingBitonBoard - 4) or available_actions.append(UP_LEFT) if (self.KingBitonBoard - 4) not in ThreatedSquares else 1==1
+				available_actions.append(UP_LEFT) if (self.KingBitonBoard - 4) not in ThreatedSquares else 1==1
 			if bottom:	#Sol-alt
-				possibleMoves.append(self.KingBitonBoard + 2) or available_actions.append(DOWN_LEFT) if (self.KingBitonBoard + 2) not in ThreatedSquares else 1==1
+				available_actions.append(DOWN_LEFT) if (self.KingBitonBoard + 2) not in ThreatedSquares else 1==1
 
 
-		return possibleMoves, available_actions
+		return available_actions
 
 
 class Pawn():
@@ -376,39 +391,39 @@ class Pawn():
 		self.PawnY = newY
 		self.IsActive = not IsCaptured
 
-	def possibleMoves(self, theboard)
+	def possibleActions(self, theboard)
 	#theboard is the board member in the MiniChess object
-		possibleMoves = []
+		available_actions = []
 
 		if self.color == "black":
 			#Bir altındakinin (önü) kontrolü
 			if theboard[self.PawnX + 1][self.PawnY] == "XX":
-				possibleMoves.append(self.PawnBitonBoard + 3)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY) + self.notation[1])
 			#Sol altındakinin kontrolü
 			if 	self.PawnY > 0 and	theboard[self.PawnX + 1][self.PawnY - 1][0] == "+":
-				possibleMoves.append(self.PawnBitonBoard + 2)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY - 1) + self.notation[1])
 			#Sağ altındakinin kontrolü
 			if 	self.PawnY < 2 and	theboard[self.PawnX + 1][self.PawnY + 1][0] == "+":
-				possibleMoves.append(self.PawnBitonBoard + 4)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY + 1) + self.notation[1])
 			#Başlangıçta iki ileri gidebilme kontrolü
 			if self.PawnX == 1 and theboard[self.PawnX + 1][self.PawnY] == "XX" and theboard[self.PawnX + 2][self.PawnY] == "XX":
-				possibleMoves.append(self.PawnBitonBoard + 6)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 2) + str(self.PawnY) + self.notation[1])
 
 		else:	#White
 			#Bir üsttekinin (önü) kontrolü
 			if theboard[self.PawnX - 1][self.PawnY] == "XX":
-				possibleMoves.append(self.PawnBitonBoard - 3)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY) + self.notation[1])
 			#Sol üsttekinin kontrolü
 			if 	self.PawnY > 0 and	theboard[self.PawnX - 1][self.PawnY - 1][0] == "-":
-				possibleMoves.append(self.PawnBitonBoard - 4)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY - 1) + self.notation[1])
 			#Sağ üsttekinin kontrolü
 			if 	self.PawnY < 2 and	theboard[self.PawnX - 1][self.PawnY + 1][0] == "-":
-				possibleMoves.append(self.PawnBitonBoard - 2)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY + 1) + self.notation[1])
 			#Başlangıçta iki ileri gidebilme kontrolü
 			if self.PawnX == 4 and theboard[self.PawnX - 1][self.PawnY] == "XX" and theboard[self.PawnX - 2][self.PawnY] == "XX":
-				possibleMoves.append(self.PawnBitonBoard - 6)
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 2) + str(self.PawnY) + self.notation[1])
 
-		return possibleMoves   #actions sonra belirlenecek!!!!!!!
+		return available_actions
 
 class Rook():
 	def __init__(self, color, rookid):
@@ -445,9 +460,9 @@ class Rook():
 		self.PawnY = newY
 		self.IsActive = not IsCaptured
 
-	def possibleMoves(self, theboard)
+	def possibleActions(self, theboard)
 	#theboard is the board member in the MiniChess object
-		possibleMoves = []
+		available_actions = []
 		
 		#horizontal
 		rightFlag = True
@@ -456,10 +471,10 @@ class Rook():
 			#Right
 			if rightFlag and self.RookY + i < 3:
 				if theboard[self.RookX][self.RookY + i] == "XX":
-					possibleMoves.append(self.RookBitonBoard + i)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY + i) + self.notation[1])
 
 				elif self.color == "white" and theboard[self.RookX][self.RookY + i][0] == "-" or self.color == "black" and theboard[self.RookX][self.RookY + i][0] == "+":
-					possibleMoves.append(self.RookBitonBoard + i)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY + i) + self.notation[1])
 					rightFlag = False
 
 				else:
@@ -467,10 +482,10 @@ class Rook():
 			#Left
 			if leftFlag and self.RookY - i >= 0:
 				if theboard[self.RookX][self.RookY - i] == "XX":
-					possibleMoves.append(self.RookBitonBoard - i)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY - i) + self.notation[1])
 
 				elif self.color == "white" and theboard[self.RookX][self.RookY - i][0] == "-" or self.color == "black" and theboard[self.RookX][self.RookY - i][0] == "+":
-					possibleMoves.append(self.RookBitonBoard - i)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY - i) + self.notation[1])
 					leftFlag = False
 
 				else:
@@ -483,10 +498,10 @@ class Rook():
 			#Down
 			if downFlag and self.RookX + i < 6:
 				if theboard[self.RookX + i][self.RookY] == "XX":
-					possibleMoves.append(self.RookBitonBoard + i*3)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX + i) + str(self.RookY) + self.notation[1])
 
 				elif self.color == "white" and theboard[self.RookX + i][self.RookY][0] == "-" or self.color == "black" and theboard[self.RookX + i][self.RookY][0] == "+":
-					possibleMoves.append(self.RookBitonBoard + i*3)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX + i) + str(self.RookY) + self.notation[1])
 					downFlag = False
 
 				else:
@@ -494,16 +509,16 @@ class Rook():
 			#Up
 			if upFlag and self.RookX - i >= 0:
 				if theboard[self.RookX - i][self.RookY] == "XX":
-					possibleMoves.append(self.RookBitonBoard - i*3)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX - i) + str(self.RookY) + self.notation[1])
 
 				elif self.color == "white" and theboard[self.RookX - i][self.RookY][0] == "-" or self.color == "black" and theboard[self.RookX - i][self.RookY][0] == "+":
-					possibleMoves.append(self.RookBitonBoard - i*3)
+					available_actions.append(str(self.RookX) + str(self.RookY) + str(self.RookX - i) + str(self.RookY) + self.notation[1])
 					upFlag = False
 
 				else:
 					upFlag = False
 
-		return possibleMoves
+		return available_actions
 
 
 
