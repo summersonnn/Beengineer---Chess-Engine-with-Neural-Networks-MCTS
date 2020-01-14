@@ -1,17 +1,15 @@
 import numpy as np 
 import random
 import torch
-import normalizer #bit vector representation'a geçtikten sonra kullanılmıyor. ilerde silinecek.
 
-UP = 0
+'''UP = 0
 DOWN = 1
 RIGHT = 2
 LEFT = 3
 UP_RIGHT = 4
 DOWN_RIGHT = 5
 DOWN_LEFT = 6
-UP_LEFT = 7
-#normalizer = normalizer.MinMaxNormalizer(0,7)
+UP_LEFT = 7'''
 
 #MiniChess class'ı Board'ı temsil eder. 
 class MiniChess():
@@ -330,31 +328,29 @@ class King():
 
 		#Üst kontrol
 		if 	self.KingBitonBoard > 2 :	#Tek renk şah için çalışır durumda. Diğer şahın bit aralık değerleri farklı olacak.
-			available_actions.append(UP) if (self.KingBitonBoard - 3) not in ThreatedSquares else 1==1
+			available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX - 1) + str(self.KingY) + str(self.notation[1])) if (self.KingBitonBoard - 3) not in ThreatedSquares else 1==1
 			top = True
 		#Sağ Kontrol
 		if 	(self.KingBitonBoard + 1) % 3 != 0:		#self.Y + 1 <= 7:
-			available_actions.append(RIGHT) if (self.KingBitonBoard + 1) not in ThreatedSquares else 1==1
+			available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX) + str(self.KingY + 1) + str(self.notation[1])) if (self.KingBitonBoard + 1) not in ThreatedSquares else 1==1
 			right = True
 			if top:	#Sag-ust
-				available_actions.append(UP_RIGHT) if (self.KingBitonBoard - 2) not in ThreatedSquares else 1==1
+				available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX - 1) + str(self.KingY + 1) + str(self.notation[1])) if (self.KingBitonBoard - 2) not in ThreatedSquares else 1==1
 		#Alt Kontrol
 		if 	self.KingBitonBoard < 15:		#self.X + 1 <= 7:
-			available_actions.append(DOWN) if (self.KingBitonBoard + 3) not in ThreatedSquares else 1==1
+			available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX + 1) + str(self.KingY) + str(self.notation[1])) if (self.KingBitonBoard + 3) not in ThreatedSquares else 1==1
 			bottom = True
 			if right:	#Sag-alt
-				available_actions.append(DOWN_RIGHT) if (self.KingBitonBoard + 4) not in ThreatedSquares else 1==1
+				available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX + 1) + str(self.KingY + 1) + str(self.notation[1])) if (self.KingBitonBoard + 4) not in ThreatedSquares else 1==1
 		#Sol Kontrol
 		if 	self.KingBitonBoard % 3 != 0:		#self.Y - 1 >= 0:
-			available_actions.append(LEFT) if (self.KingBitonBoard - 1) not in ThreatedSquares else 1==1
+			available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX) + str(self.KingY - 1) + str(self.notation[1])) if (self.KingBitonBoard - 1) not in ThreatedSquares else 1==1
 			if top:	#Sol-üst
-				available_actions.append(UP_LEFT) if (self.KingBitonBoard - 4) not in ThreatedSquares else 1==1
+				available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX - 1) + str(self.KingY - 1) + str(self.notation[1])) if (self.KingBitonBoard - 4) not in ThreatedSquares else 1==1
 			if bottom:	#Sol-alt
-				available_actions.append(DOWN_LEFT) if (self.KingBitonBoard + 2) not in ThreatedSquares else 1==1
-
+				available_actions.append(str(self.KingX) + str(self.KingY) + str(self.KingX + 1) + str(self.KingY - 1) + str(self.notation[1])) if (self.KingBitonBoard + 2) not in ThreatedSquares else 1==1
 
 		return available_actions
-
 
 class Pawn():
 	def __init__(self, color, pawnid):
@@ -396,6 +392,18 @@ class Pawn():
 		available_actions = []
 
 		if self.color == "black":
+			#Başlangıçta iki ileri gidebilme kontrolü
+			if self.PawnX == 1 and theboard[self.PawnX + 1][self.PawnY] == "XX" and theboard[self.PawnX + 2][self.PawnY] == "XX":
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 2) + str(self.PawnY) + self.notation[1])
+			#Kaleye çıkma kontrolü
+			elif self.PawnX == 4:
+				if theboard[self.PawnX + 1][self.PawnY] == "XX":
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY) + "R")
+				if self.PawnY > 0 and theboard[self.PawnX + 1][self.PawnY - 1][0] == "+":
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY - 1) + "R")
+				if 	self.PawnY < 2 and	theboard[self.PawnX + 1][self.PawnY + 1][0] == "+":
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY + 1) + "R")
+
 			#Bir altındakinin (önü) kontrolü
 			if theboard[self.PawnX + 1][self.PawnY] == "XX":
 				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY) + self.notation[1])
@@ -405,11 +413,20 @@ class Pawn():
 			#Sağ altındakinin kontrolü
 			if 	self.PawnY < 2 and	theboard[self.PawnX + 1][self.PawnY + 1][0] == "+":
 				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY + 1) + self.notation[1])
-			#Başlangıçta iki ileri gidebilme kontrolü
-			if self.PawnX == 1 and theboard[self.PawnX + 1][self.PawnY] == "XX" and theboard[self.PawnX + 2][self.PawnY] == "XX":
-				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 2) + str(self.PawnY) + self.notation[1])
-
+			
 		else:	#White
+			#Başlangıçta iki ileri gidebilme kontrolü
+			if self.PawnX == 4 and theboard[self.PawnX - 1][self.PawnY] == "XX" and theboard[self.PawnX - 2][self.PawnY] == "XX":
+				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 2) + str(self.PawnY) + self.notation[1])
+			#Kaleye çıkma kontrolü
+			elif self.PawnX == 1:
+				if theboard[self.PawnX - 1][self.PawnY] == "XX":
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY) + "R")
+				if self.PawnY > 0 and theboard[self.PawnX - 1][self.PawnY - 1][0] == "-":
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY - 1) + "R")
+				if 	self.PawnY < 2 and	theboard[self.PawnX - 1][self.PawnY + 1][0] == "-":
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY + 1) + "R")
+
 			#Bir üsttekinin (önü) kontrolü
 			if theboard[self.PawnX - 1][self.PawnY] == "XX":
 				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY) + self.notation[1])
@@ -419,9 +436,7 @@ class Pawn():
 			#Sağ üsttekinin kontrolü
 			if 	self.PawnY < 2 and	theboard[self.PawnX - 1][self.PawnY + 1][0] == "-":
 				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY + 1) + self.notation[1])
-			#Başlangıçta iki ileri gidebilme kontrolü
-			if self.PawnX == 4 and theboard[self.PawnX - 1][self.PawnY] == "XX" and theboard[self.PawnX - 2][self.PawnY] == "XX":
-				available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 2) + str(self.PawnY) + self.notation[1])
+
 
 		return available_actions
 
