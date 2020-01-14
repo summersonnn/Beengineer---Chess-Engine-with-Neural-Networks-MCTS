@@ -82,15 +82,22 @@ class MiniChess():
 
 		#Colour, Totalmovecount, P1-castling, P2-castling, No-progress count sonradan eklenecek
 
-		self.BlackKingBitonBoard = 1
-		self.WhiteKingBitonBoard = 16
-		self.BlackKingX = 0
-		self.BlackKingY = 1
-		self.WhiteKingX = 5
-		self.WhiteKingY = 1
-		self.available_actions = []
+		#self.BlackKingBitonBoard = 1
+		#self.WhiteKingBitonBoard = 16
+		#self.BlackKingX = 0
+		#self.BlackKingY = 1
+		#self.WhiteKingX = 5
+		#self.WhiteKingY = 1
 		self.BlackKing = King("black")
 		self.WhiteKing = King("white")
+		self.Black_A_Pawn = Pawn("black", 0)
+		self.Black_B_Pawn = Pawn("black", 1)
+		self.Black_C_Pawn = Pawn("black", 2)
+		self.White_A_Pawn = Pawn("white", 3)
+		self.White_B_Pawn = Pawn("white", 4)
+		self.White_C_Pawn = Pawn("white", 5)
+
+		self.available_actions = []
 		self.ThreatedSquares = []
 		self.PossibleMoves = []
 		self.device = device
@@ -274,21 +281,30 @@ class King():
 		if color == "white":
 			self.notation = "+K"
 			self.KingBitonBoard = 16
+			self.KingX = 5
+			self.KingY = 1
 		elif color == "black":
 			self.notation = "-K"
 			self.KingBitonBoard = 1
+			self.KingX = 0
+			self.KingY = 1
 
 	def reset(self):
 		if self.color == "white":
 			self.KingBitonBoard = 16
+			self.KingX = 5
+			self.KingY = 1
 		elif self.color == "black":
 			self.KingBitonBoard = 1
+			self.KingX = 0
+			self.KingY = 1
 
 	#MiniChess'teki step fonksiyonu tarafından çağrılır. Şah'ın pozisyonunu düzenler.
-	def step(self, KingBitonBoard):
+	def step(self, KingBitonBoard, newX, newY):
 		self.KingBitonBoard = KingBitonBoard
+		self.KingX = newX
+		self.KingY = newY
 
-	#Legal hamlelerin koordinat ikililerinin listesini döndürür. Örn:  [[1,2], [1,3]]
 	def possibleMoves(self, ThreatedSquares):
 		#2d list to keep track of possile moves of the King
 		possibleMoves = []
@@ -323,5 +339,178 @@ class King():
 
 
 		return possibleMoves, available_actions
+
+
+class Pawn():
+	def __init__(self, color, pawnid):
+		self.color = color
+		self.pawnid = pawnid
+		self.IsActive = True
+
+		if color == "white":
+			self.notation = "+P"
+			self.PawnBitonBoard = pawnid + 9
+			self.PawnX = 4
+			self.PawnY = pawnid - 3
+		elif color == "black":
+			self.notation = "-P"
+			self.PawnBitonBoard = pawnid + 3
+			self.PawnX = 1
+			self.PawnY = pawnid
+
+	def reset(self):
+		self.IsActive = True
+		#PawnBit may change but pawnid never changes. So, reset the pawnbit according to pawnid
+		if self.color == "white":
+			self.PawnBitonBoard = pawnid + 9
+			self.PawnX = 4
+			self.PawnY = self.pawnid - 3
+		elif self.color == "black":
+			self.PawnBitonBoard = pawnid + 3
+			self.PawnX = 1
+			self.PawnY = self.pawnid
+
+	def step(self, PawnBitonBoard, newX, newY, IsCaptured=False):
+		self.PawnBitonBoard = PawnBitonBoard
+		self.PawnX = newX
+		self.PawnY = newY
+		self.IsActive = not IsCaptured
+
+	def possibleMoves(self, theboard)
+	#theboard is the board member in the MiniChess object
+		possibleMoves = []
+
+		if self.color == "black":
+			#Bir altındakinin (önü) kontrolü
+			if theboard[self.PawnX + 1][self.PawnY] == "XX":
+				possibleMoves.append(self.PawnBitonBoard + 3)
+			#Sol altındakinin kontrolü
+			if 	self.PawnY > 0 and	theboard[self.PawnX + 1][self.PawnY - 1][0] == "+":
+				possibleMoves.append(self.PawnBitonBoard + 2)
+			#Sağ altındakinin kontrolü
+			if 	self.PawnY < 2 and	theboard[self.PawnX + 1][self.PawnY + 1][0] == "+":
+				possibleMoves.append(self.PawnBitonBoard + 4)
+			#Başlangıçta iki ileri gidebilme kontrolü
+			if self.PawnX == 1 and theboard[self.PawnX + 1][self.PawnY] == "XX" and theboard[self.PawnX + 2][self.PawnY] == "XX":
+				possibleMoves.append(self.PawnBitonBoard + 6)
+
+		else:	#White
+			#Bir üsttekinin (önü) kontrolü
+			if theboard[self.PawnX - 1][self.PawnY] == "XX":
+				possibleMoves.append(self.PawnBitonBoard - 3)
+			#Sol üsttekinin kontrolü
+			if 	self.PawnY > 0 and	theboard[self.PawnX - 1][self.PawnY - 1][0] == "-":
+				possibleMoves.append(self.PawnBitonBoard - 4)
+			#Sağ üsttekinin kontrolü
+			if 	self.PawnY < 2 and	theboard[self.PawnX - 1][self.PawnY + 1][0] == "-":
+				possibleMoves.append(self.PawnBitonBoard - 2)
+			#Başlangıçta iki ileri gidebilme kontrolü
+			if self.PawnX == 4 and theboard[self.PawnX - 1][self.PawnY] == "XX" and theboard[self.PawnX - 2][self.PawnY] == "XX":
+				possibleMoves.append(self.PawnBitonBoard - 6)
+
+		return possibleMoves   #actions sonra belirlenecek!!!!!!!
+
+class Rook():
+	def __init__(self, color, rookid):
+		self.color = color
+		self.rookid = rookid
+		self.IsActive = True
+
+		if color == "white":
+			self.notation = "+R"
+			self.RookBitonBoard = rookid*2 + 11
+			self.RookX = 5
+			self.RookY = rookid*2 - 4
+		elif color == "black":
+			self.notation = "-R"
+			self.RookBitonBoard = rookid*2
+			self.RookX = 0
+			self.RookY = rookid*2
+
+	def reset(self):
+		self.IsActive = True
+
+		if self.color == "white":
+			self.RookBitonBoard = self.rookid*2 + 11
+			self.RookX = 5
+			self.RookY = self.rookid*2 - 4
+		elif self.color == "black":
+			self.RookBitonBoard = self.rookid*2
+			self.RookX = 0
+			self.RookY = self.rookid*2
+
+	def step(self, RookBitonBoard, newX, newY, IsCaptured=False):
+		self.RookBitonBoard = RookBitonBoard
+		self.PawnX = newX
+		self.PawnY = newY
+		self.IsActive = not IsCaptured
+
+	def possibleMoves(self, theboard)
+	#theboard is the board member in the MiniChess object
+		possibleMoves = []
+		
+		#horizontal
+		rightFlag = True
+		leftFlag = True
+		for i in range (1,3)
+			#Right
+			if rightFlag and self.RookY + i < 3:
+				if theboard[self.RookX][self.RookY + i] == "XX":
+					possibleMoves.append(self.RookBitonBoard + i)
+
+				elif self.color == "white" and theboard[self.RookX][self.RookY + i][0] == "-" or self.color == "black" and theboard[self.RookX][self.RookY + i][0] == "+":
+					possibleMoves.append(self.RookBitonBoard + i)
+					rightFlag = False
+
+				else:
+					rightFlag = False
+			#Left
+			if leftFlag and self.RookY - i >= 0:
+				if theboard[self.RookX][self.RookY - i] == "XX":
+					possibleMoves.append(self.RookBitonBoard - i)
+
+				elif self.color == "white" and theboard[self.RookX][self.RookY - i][0] == "-" or self.color == "black" and theboard[self.RookX][self.RookY - i][0] == "+":
+					possibleMoves.append(self.RookBitonBoard - i)
+					leftFlag = False
+
+				else:
+					leftFlag = False
+
+		#vertical
+		upFlag = True
+		downFlag = True
+		for i in range (1,6)
+			#Down
+			if downFlag and self.RookX + i < 6:
+				if theboard[self.RookX + i][self.RookY] == "XX":
+					possibleMoves.append(self.RookBitonBoard + i*3)
+
+				elif self.color == "white" and theboard[self.RookX + i][self.RookY][0] == "-" or self.color == "black" and theboard[self.RookX + i][self.RookY][0] == "+":
+					possibleMoves.append(self.RookBitonBoard + i*3)
+					downFlag = False
+
+				else:
+					downFlag = False
+			#Up
+			if upFlag and self.RookX - i >= 0:
+				if theboard[self.RookX - i][self.RookY] == "XX":
+					possibleMoves.append(self.RookBitonBoard - i*3)
+
+				elif self.color == "white" and theboard[self.RookX - i][self.RookY][0] == "-" or self.color == "black" and theboard[self.RookX - i][self.RookY][0] == "+":
+					possibleMoves.append(self.RookBitonBoard - i*3)
+					upFlag = False
+
+				else:
+					upFlag = False
+
+		return possibleMoves
+
+
+
+
+
+
+
+
 
 
