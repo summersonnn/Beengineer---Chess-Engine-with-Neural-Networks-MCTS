@@ -2,15 +2,6 @@ import numpy as np
 import random
 import torch
 
-'''UP = 0
-DOWN = 1
-RIGHT = 2
-LEFT = 3
-UP_RIGHT = 4
-DOWN_RIGHT = 5
-DOWN_LEFT = 6
-UP_LEFT = 7'''
-
 #MiniChess class'ı Board'ı temsil eder. 
 class MiniChess():
 	def __init__(self, device):
@@ -79,13 +70,6 @@ class MiniChess():
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#704-768 (beyaz vezir)'''
 
 		#Colour, Totalmovecount, P1-castling, P2-castling, No-progress count sonradan eklenecek
-
-		#self.BlackKingBitonBoard = 1
-		#self.WhiteKingBitonBoard = 16
-		#self.BlackKingX = 0
-		#self.BlackKingY = 1
-		#self.WhiteKingX = 5
-		#self.WhiteKingY = 1
 		self.BlackKing = King("black")
 		self.WhiteKing = King("white")
 		self.Black_A_Pawn = Pawn("black", 0)
@@ -102,7 +86,6 @@ class MiniChess():
 		self.available_actions = []
 		self.ThreatedSquares = []
 		self.device = device
-		self.terminal = False
 
 	#Tahtayı başlangıç pozisyonuna getirir. Sonuç olarak, state number'ı döndürür.
 	def reset(self):
@@ -170,17 +153,20 @@ class MiniChess():
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#704-768 (beyaz vezir)'''
 
-		self.BlackKingBitonBoard = 1
-		self.WhiteKingBitonBoard = 16
-		self.BlackKingX = 0
-		self.BlackKingY = 1
-		self.WhiteKingX = 5
-		self.WhiteKingY = 1
 		self.available_actions = []
 		self.BlackKing.reset()
+		self.Black_A_Pawn.reset()
+		self.Black_B_Pawn.reset()
+		self.Black_C_Pawn.reset()
+		self.Black_A_Rook.reset()
+		self.Black_C_Rook.reset()
 		self.WhiteKing.reset()
+		self.White_A_Pawn.reset()
+		self.White_B_Pawn.reset()
+		self.White_C_Pawn.reset()
+		self.White_A_Rook.reset()
+		self.White_C_Rook.reset()
 		self.ThreatedSquares = []
-		self.terminal = False
 
 		return None
 
@@ -241,16 +227,10 @@ class MiniChess():
 		ThreatedSquares = [16, 17, 18, 19, 20, 21, 22, 23]	
 		return ThreatedSquares
 
-	#Burada her bir alet için possible moves hesaplanacak. Şimdilik tek alet olan şah için hesaplanıyor.
-	'''def calculatePossibleMoves(self):
-		self.ThreatedSquares = self.calculateThreatedSquares()
-		self.PossibleMoves, self.available_actions = self.King.possibleMoves(self.ThreatedSquares)
-		return self.PossibleMoves'''
-
 	#Tahtayı yazdırır.
 	def print(self):
-		for i in range(8):
-			for j in range(8):
+		for i in range(6):
+			for j in range(3):
 				print(self.board[i][j], end=" ")
 			print(" ")
 
@@ -277,8 +257,8 @@ class MiniChess():
 
 	#Tensor coming in, tensor coming out
 	def take_action(self, action):
-		_, reward, self.terminal = self.step(action.item())
-		return torch.from_numpy(np.array([reward], dtype=np.float32)).unsqueeze(0), self.terminal
+		_, reward, terminal = self.step(action.item())
+		return torch.from_numpy(np.array([reward], dtype=np.float32)).unsqueeze(0), terminal
 
 	def get_state(self):
 		#normalizedState = normalizer.normalize([self.KingX, self.KingY])
@@ -398,11 +378,11 @@ class Pawn():
 			#Kaleye çıkma kontrolü
 			elif self.PawnX == 4:
 				if theboard[self.PawnX + 1][self.PawnY] == "XX":
-					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY) + "R")
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY) + "=R")
 				if self.PawnY > 0 and theboard[self.PawnX + 1][self.PawnY - 1][0] == "+":
-					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY - 1) + "R")
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY - 1) + "=R")
 				if 	self.PawnY < 2 and	theboard[self.PawnX + 1][self.PawnY + 1][0] == "+":
-					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY + 1) + "R")
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY + 1) + "=R")
 
 			#Bir altındakinin (önü) kontrolü
 			if theboard[self.PawnX + 1][self.PawnY] == "XX":
@@ -421,11 +401,11 @@ class Pawn():
 			#Kaleye çıkma kontrolü
 			elif self.PawnX == 1:
 				if theboard[self.PawnX - 1][self.PawnY] == "XX":
-					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY) + "R")
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY) + "=R")
 				if self.PawnY > 0 and theboard[self.PawnX - 1][self.PawnY - 1][0] == "-":
-					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY - 1) + "R")
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY - 1) + "=R")
 				if 	self.PawnY < 2 and	theboard[self.PawnX - 1][self.PawnY + 1][0] == "-":
-					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY + 1) + "R")
+					available_actions.append(str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY + 1) + "=R")
 
 			#Bir üsttekinin (önü) kontrolü
 			if theboard[self.PawnX - 1][self.PawnY] == "XX":

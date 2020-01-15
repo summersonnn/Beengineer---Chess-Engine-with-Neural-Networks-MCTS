@@ -17,7 +17,7 @@ class DQN(nn.Module):
 		self.fc1 = nn.Linear(in_features=108, out_features=132)
 		self.fc2 = nn.Linear(in_features=132, out_features=192)
 		self.fc3 = nn.Linear(in_features=192, out_features=216)
-		self.out = nn.Linear(in_features=216, out_features=251)
+		self.out = nn.Linear(in_features=216, out_features=282)
 
 	def forward(self, t):
 		t = F.relu(self.fc1(t))
@@ -98,9 +98,9 @@ class Agent():
 		#Exploit
 		else:
 			with torch.no_grad():
-				tensor_from_net = policy_net(state).to(self.device)  #.argmax()  #exploit
+				tensor_from_net = policy_net(state).to(self.device)
 				while (True):
-					max_index = tensor_from_net.argmax()
+					max_index = tensor_from_net.argmax()	#Index of max item is obtained
 					#If illegal move is given as output by the model, punish that action and make it select an action again.
 					if max_index.item() not in available_actions:
 						tensor_from_net[max_index] = torch.tensor(-100)
