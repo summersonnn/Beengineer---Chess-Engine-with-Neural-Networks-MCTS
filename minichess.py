@@ -1,6 +1,7 @@
 import numpy as np 
 import random
 import torch
+import sys
 import actionsdefined as ad
 
 #MiniChess class'ı Board'ı temsil eder. 
@@ -71,19 +72,8 @@ class MiniChess():
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#704-768 (beyaz vezir)'''
 
 		#Colour, Totalmovecount, P1-castling, P2-castling, No-progress count sonradan eklenecek
-		self.BlackKing = King("black")
-		self.WhiteKing = King("white")
-		self.Black_A_Pawn = Pawn("black", 0)
-		self.Black_B_Pawn = Pawn("black", 1)
-		self.Black_C_Pawn = Pawn("black", 2)
-		self.White_A_Pawn = Pawn("white", 3)
-		self.White_B_Pawn = Pawn("white", 4)
-		self.White_C_Pawn = Pawn("white", 5)
-		self.Black_A_Rook = Rook("black", 0)
-		self.Black_C_Rook = Rook("black", 1)
-		self.White_A_Rook = Rook("white", 2)
-		self.White_C_Rook = Rook("white", 3)
-
+		
+		self.pieceList = [King("black"), Pawn("black", 0), Pawn("black", 1), Pawn("black", 2), Rook("black", 0), Rook("black", 1), King("white"), Pawn("white", 3), Pawn("white", 4), Pawn("white", 5), Rook("white", 2), Rook("white", 3)]
 		self.available_actions = []
 		self.ThreatedSquares = []
 		self.device = device
@@ -155,72 +145,87 @@ class MiniChess():
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#704-768 (beyaz vezir)'''
 
 		self.available_actions = []
-		self.BlackKing.reset()
-		self.Black_A_Pawn.reset()
-		self.Black_B_Pawn.reset()
-		self.Black_C_Pawn.reset()
-		self.Black_A_Rook.reset()
-		self.Black_C_Rook.reset()
-		self.WhiteKing.reset()
-		self.White_A_Pawn.reset()
-		self.White_B_Pawn.reset()
-		self.White_C_Pawn.reset()
-		self.White_A_Rook.reset()
-		self.White_C_Rook.reset()
+		for i in pieceList:
+			del i
+		self.pieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2), King("white", 5, 1), Pawn("white", 4, 0), Pawn("white", 4, 1), Pawn("white", 4, 2), Rook("white", 5, 0), Rook("white", 5, 2)]
 		self.ThreatedSquares = []
 
 		return None
 
 	#Şah'a bir adım attırır ve tahtayı düzenler. Ayrıca Şah objesinin step fonksiyonunu çağırır ve onun da kendisini düzenlemesini sağlar.
 	def step(self, action):
-		self.board[self.KingX][self.KingY] = "XX"	#Şaha adım attırmadan önce bulunduğu yeri boşluk ile dolduruyoruz.
-		self.bitVectorBoard[self.WhiteKingBitonBoard] = 0
+		inv_actions = {v: k for k, v in ad.actions.items()}
+		current_action = inv_actions[action]
+		#We got the action number, e.g 112
+		#Now we will edit the board and pass the resulting board to MCSearchTree so that it can return us a reward
+
+		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
+		pieceNotationBeforeMove = self.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
+		oldcoorBit = coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
+		self.board[int(current_action[0])][int(current_action[1])] = "XX"
+		self.bitVectorBoard[oldcoorBit] = 0
+
+		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
+		if len(current_action) == 6:
+			promoted = True 
+		else:
+			promoted = False
+		
+		#If capture happened, 
+		capturedPieceNotation = self.board[int(current_action[2])][int(current_action[3])]
+		if capturedPieceNotation != "XX":
+			capturedPieceBit = coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
+			self.bitVectorBoard[capturedPieceBit] = 0
+			removeCapturedPiece(capturedPieceBit)
+
+		self.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
+		newcoorBit = coorToBitVector(int(current_action[2]), int(current_action[3]), pieceNotationAfterMove)
+		self.bitVectorBoard[newcoorBit] = 1
+
+		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
+		if not promoted:
+			for i in pieceList:
+				if i.X == int(current_action[0]) and i.Y == int(current_action[1]):
+					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
+		#if promoted, create a new object
+		else:
+			color = "white" if pieceNotationAfterMove[0] == "+" else "black"
+			pieceList += Rook(color, int(current_action[2]), int(current_action[3]))
 
 		reward = 0
 		terminal = False
 
-		if action == UP:
-			self.WhiteKingX = self.WhiteKingX - 1
-			self.WhiteKingBitonBoard -= 3
-		elif action == DOWN:
-			self.WhiteKingX = self.WhiteKingX + 1
-			self.WhiteKingBitonBoard += 3
-		elif action == RIGHT:
-			self.WhiteKingY = self.WhiteKingY + 1
-			self.WhiteKingBitonBoard += 1
-		elif action == LEFT:
-			self.WhiteKingY = self.WhiteKingY - 1
-			self.WhiteKingBitonBoard -= 1
-		elif action == UP_RIGHT:
-			self.WhiteKingX = self.WhiteKingX - 1
-			self.WhiteKingY = self.WhiteKingY + 1
-			self.WhiteKingBitonBoard -= 2
-		elif action == DOWN_RIGHT:
-			self.WhiteKingX = self.WhiteKingX + 1
-			self.WhiteKingY = self.WhiteKingY + 1
-			self.WhiteKingBitonBoard += 4
-		elif action == DOWN_LEFT:
-			self.WhiteKingX = self.WhiteKingX + 1
-			self.WhiteKingY = self.WhiteKingY - 1
-			self.WhiteKingBitonBoard += 2
-		elif action == UP_LEFT:
-			self.WhiteKingX = self.WhiteKingX - 1
-			self.WhiteKingY = self.WhiteKingY - 1
-			self.WhiteKingBitonBoard -= 4
-
-		self.board[self.WhiteKingX][self.WhiteKingY] = "K"	#Şahın yeni konumuna notasyonunu ekliyoruz.
-		self.bitVectorBoard[self.WhiteKingBitonBoard] = 1
-		self.WhiteKing.step(self.WhiteKingBitonBoard)		#Şah objesine adım attırıyoruz.
-
 		#OYUN AMACINI TASARLA. ONA GORE REWARD MEKANIZMASI KUR
 		#Şimdilik amacımız Şah'ın en üste çıkması olduğundan, X koordinatı 0 ise oyun biter.
-		'''if 	self.WhiteKingBitonBoard < 8:	#self.WhiteKingX == 0:
+		'''if 	self.WhiteKingBitonBoard < 8:	#self.WhiteX == 0:
 			reward += 10000
 			terminal = True
 		else:
 			reward -= 10;
 
 		return None, reward, terminal'''
+
+	def coorToBitVector(self, x, y, notation):
+		coor = x*3 + y
+		if notation == "+K":
+			return coor
+		elif notation == "+P":
+			return coor + 18
+		elif notation == "+R":
+			return coor + 36
+		elif notation == "-K":
+			return coor + 54
+		elif notation == "-P":
+			return coor + 72
+		elif notation == "-R":
+			return coor + 90
+
+	def removeCapturedPiece(self, BitonBoard):
+		for index,i in enumerate(pieceList,0):
+			if i.BitonBoard == BitonBoard:
+				indexToBeDeleted = index
+				break
+		del pieceList[indexToBeDeleted]
 
 	#Tehdit edilen kareler hesaplanıyor
 	def calculateThreatedSquares(self):
@@ -262,44 +267,35 @@ class MiniChess():
 		return torch.from_numpy(np.array([reward], dtype=np.float32)).unsqueeze(0), terminal
 
 	def get_state(self):
-		#normalizedState = normalizer.normalize([self.KingX, self.KingY])
+		#normalizedState = normalizer.normalize([self.X, self.Y])
 		return torch.tensor(self.bitVectorBoard, dtype=torch.float32)
 
 	def get_humanistic_state(self):
-		return [self.WhiteKingX, self.WhiteKingY]
+		return [self.WhiteX, self.WhiteY]
 
 
 #Şah class'ıdır. Objesi, MiniChess clasının içinde oluşturulur. Şah objesi, MiniChess clasının bir elemanıdır.
 class King():
-	def __init__(self, color):
-		self.color = color
+	class_counter = 0
 
+	def __init__(self, color, x, y):
+		self.color = color
 		if color == "white":
 			self.notation = "+K"
-			self.KingBitonBoard = 16
-			self.KingX = 5
-			self.KingY = 1
 		elif color == "black":
 			self.notation = "-K"
-			self.KingBitonBoard = 1
-			self.KingX = 0
-			self.KingY = 1
 
-	def reset(self):
-		if self.color == "white":
-			self.KingBitonBoard = 16
-			self.KingX = 5
-			self.KingY = 1
-		elif self.color == "black":
-			self.KingBitonBoard = 1
-			self.KingX = 0
-			self.KingY = 1
+		self.X = x
+		self.Y = y
+		self.BitonBoard = coorToBitVector(x, y, self.notation)
+		self.id = King.class_counter
+        King.class_counter += 1
 
 	#MiniChess'teki step fonksiyonu tarafından çağrılır. Şah'ın pozisyonunu düzenler.
-	def step(self, KingBitonBoard, newX, newY):
-		self.KingBitonBoard = KingBitonBoard
-		self.KingX = newX
-		self.KingY = newY
+	def step(self, BitonBoard, newX, newY):
+		self.BitonBoard = BitonBoard
+		self.X = newX
+		self.Y = newY
 
 	def possibleActions(self, ThreatedSquares):
 		available_actions = []
@@ -308,73 +304,59 @@ class King():
 		right = False
 
 		#Üst kontrol
-		if 	self.KingBitonBoard > 2 :	#Tek renk şah için çalışır durumda. Diğer şahın bit aralık değerleri farklı olacak.
-			action_string = str(self.KingX) + str(self.KingY) + str(self.KingX - 1) + str(self.KingY) + str(self.notation[1])
-			available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard - 3) not in ThreatedSquares else 1==1
+		if 	self.BitonBoard > 2 :	#Tek renk şah için çalışır durumda. Diğer şahın bit aralık değerleri farklı olacak.
+			action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y) + str(self.notation[1])
+			available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 3) not in ThreatedSquares else 1==1
 			top = True
 		#Sağ Kontrol
-		if 	(self.KingBitonBoard + 1) % 3 != 0:		#self.Y + 1 <= 7:
-			action_string = str(self.KingX) + str(self.KingY) + str(self.KingX) + str(self.KingY + 1) + str(self.notation[1])
-			available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard + 1) not in ThreatedSquares else 1==1
+		if 	(self.BitonBoard + 1) % 3 != 0:		#self.Y + 1 <= 7:
+			action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + 1) + str(self.notation[1])
+			available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 1) not in ThreatedSquares else 1==1
 			right = True
 			if top:	#Sag-ust
-				action_string = str(self.KingX) + str(self.KingY) + str(self.KingX - 1) + str(self.KingY + 1) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard - 2) not in ThreatedSquares else 1==1
+				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 2) not in ThreatedSquares else 1==1
 		#Alt Kontrol
-		if 	self.KingBitonBoard < 15:		#self.X + 1 <= 7:
-			action_string = str(self.KingX) + str(self.KingY) + str(self.KingX + 1) + str(self.KingY) + str(self.notation[1])
-			available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard + 3) not in ThreatedSquares else 1==1
+		if 	self.BitonBoard < 15:		#self.X + 1 <= 7:
+			action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + str(self.notation[1])
+			available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 3) not in ThreatedSquares else 1==1
 			bottom = True
 			if right:	#Sag-alt
-				action_string = str(self.KingX) + str(self.KingY) + str(self.KingX + 1) + str(self.KingY + 1) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard + 4) not in ThreatedSquares else 1==1
+				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 4) not in ThreatedSquares else 1==1
 		#Sol Kontrol
-		if 	self.KingBitonBoard % 3 != 0:		#self.Y - 1 >= 0:
-			action_string = str(self.KingX) + str(self.KingY) + str(self.KingX) + str(self.KingY - 1) + str(self.notation[1])
-			available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard - 1) not in ThreatedSquares else 1==1
+		if 	self.BitonBoard % 3 != 0:		#self.Y - 1 >= 0:
+			action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - 1) + str(self.notation[1])
+			available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 1) not in ThreatedSquares else 1==1
 			if top:	#Sol-üst
-				action_string = str(self.KingX) + str(self.KingY) + str(self.KingX - 1) + str(self.KingY - 1) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard - 4) not in ThreatedSquares else 1==1
+				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 4) not in ThreatedSquares else 1==1
 			if bottom:	#Sol-alt
-				action_string = str(self.KingX) + str(self.KingY) + str(self.KingX + 1) + str(self.KingY - 1) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.KingBitonBoard + 2) not in ThreatedSquares else 1==1
+				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 2) not in ThreatedSquares else 1==1
 
 		return available_actions
 
 class Pawn():
-	def __init__(self, color, pawnid):
-		self.color = color
-		self.pawnid = pawnid
-		self.IsActive = True
+	class_counter = 0
 
+	def __init__(self, color, x, y):
+		self.color = color
 		if color == "white":
 			self.notation = "+P"
-			self.PawnBitonBoard = pawnid + 9
-			self.PawnX = 4
-			self.PawnY = pawnid - 3
 		elif color == "black":
 			self.notation = "-P"
-			self.PawnBitonBoard = pawnid + 3
-			self.PawnX = 1
-			self.PawnY = pawnid
 
-	def reset(self):
-		self.IsActive = True
-		#PawnBit may change but pawnid never changes. So, reset the pawnbit according to pawnid
-		if self.color == "white":
-			self.PawnBitonBoard = pawnid + 9
-			self.PawnX = 4
-			self.PawnY = self.pawnid - 3
-		elif self.color == "black":
-			self.PawnBitonBoard = pawnid + 3
-			self.PawnX = 1
-			self.PawnY = self.pawnid
+		self.X = x
+		self.Y = y
+		self.BitonBoard = coorToBitVector(x, y, self.notation)
+		self.id = Pawn.class_counter
+        Pawn.class_counter += 1
 
-	def step(self, PawnBitonBoard, newX, newY, IsCaptured=False):
-		self.PawnBitonBoard = PawnBitonBoard
-		self.PawnX = newX
-		self.PawnY = newY
-		self.IsActive = not IsCaptured
+	def step(self, BitonBoard, newX, newY):
+		self.BitonBoard = BitonBoard
+		self.X = newX
+		self.Y = newY
 
 	def possibleActions(self, theboard)
 	#theboard is the board member in the MiniChess object
@@ -382,101 +364,87 @@ class Pawn():
 
 		if self.color == "black":
 			#Başlangıçta iki ileri gidebilme kontrolü
-			if self.PawnX == 1 and theboard[self.PawnX + 1][self.PawnY] == "XX" and theboard[self.PawnX + 2][self.PawnY] == "XX":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 2) + str(self.PawnY) + self.notation[1]
+			if self.X == 1 and theboard[self.X + 1][self.Y] == "XX" and theboard[self.X + 2][self.Y] == "XX":
+				action_string = str(self.X) + str(self.Y) + str(self.X + 2) + str(self.Y) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 			#Kaleye çıkma kontrolü
-			elif self.PawnX == 4:
-				if theboard[self.PawnX + 1][self.PawnY] == "XX":
-					action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY) + "=R"
+			elif self.X == 4:
+				if theboard[self.X + 1][self.Y] == "XX":
+					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + "=R"
 					available_actions.append(ad.actions[action_string])
-				if self.PawnY > 0 and theboard[self.PawnX + 1][self.PawnY - 1][0] == "+":
-					action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY - 1) + "=R"
+				if self.Y > 0 and theboard[self.X + 1][self.Y - 1][0] == "+":
+					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + "=R"
 					available_actions.append(ad.actions[action_string])
-				if 	self.PawnY < 2 and	theboard[self.PawnX + 1][self.PawnY + 1][0] == "+":
-					action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY + 1) + "=R"
+				if 	self.Y < 2 and	theboard[self.X + 1][self.Y + 1][0] == "+":
+					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + "=R"
 					available_actions.append(ad.actions[action_string])
 
 			#Bir altındakinin (önü) kontrolü
-			if theboard[self.PawnX + 1][self.PawnY] == "XX":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY) + self.notation[1]
+			if theboard[self.X + 1][self.Y] == "XX":
+				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 			#Sol altındakinin kontrolü
-			if 	self.PawnY > 0 and	theboard[self.PawnX + 1][self.PawnY - 1][0] == "+":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY - 1) + self.notation[1]
+			if 	self.Y > 0 and	theboard[self.X + 1][self.Y - 1][0] == "+":
+				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 			#Sağ altındakinin kontrolü
-			if 	self.PawnY < 2 and	theboard[self.PawnX + 1][self.PawnY + 1][0] == "+":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX + 1) + str(self.PawnY + 1) + self.notation[1]
+			if 	self.Y < 2 and	theboard[self.X + 1][self.Y + 1][0] == "+":
+				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 			
 		else:	#White
 			#Başlangıçta iki ileri gidebilme kontrolü
-			if self.PawnX == 4 and theboard[self.PawnX - 1][self.PawnY] == "XX" and theboard[self.PawnX - 2][self.PawnY] == "XX":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 2) + str(self.PawnY) + self.notation[1]
+			if self.X == 4 and theboard[self.X - 1][self.Y] == "XX" and theboard[self.X - 2][self.Y] == "XX":
+				action_string = str(self.X) + str(self.Y) + str(self.X - 2) + str(self.Y) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 			#Kaleye çıkma kontrolü
-			elif self.PawnX == 1:
-				if theboard[self.PawnX - 1][self.PawnY] == "XX":
-					action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY) + "=R"
+			elif self.X == 1:
+				if theboard[self.X - 1][self.Y] == "XX":
+					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y) + "=R"
 					available_actions.append(ad.actions[action_string])
-				if self.PawnY > 0 and theboard[self.PawnX - 1][self.PawnY - 1][0] == "-":
-					action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY - 1) + "=R"
+				if self.Y > 0 and theboard[self.X - 1][self.Y - 1][0] == "-":
+					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + "=R"
 					available_actions.append(ad.actions[action_string])
-				if 	self.PawnY < 2 and	theboard[self.PawnX - 1][self.PawnY + 1][0] == "-":
-					action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY + 1) + "=R"
+				if 	self.Y < 2 and	theboard[self.X - 1][self.Y + 1][0] == "-":
+					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + "=R"
 					available_actions.append(ad.actions[action_string])
 
 			#Bir üsttekinin (önü) kontrolü
-			if theboard[self.PawnX - 1][self.PawnY] == "XX":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY) + self.notation[1]
+			if theboard[self.X - 1][self.Y] == "XX":
+				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 			#Sol üsttekinin kontrolü
-			if 	self.PawnY > 0 and	theboard[self.PawnX - 1][self.PawnY - 1][0] == "-":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY - 1) + self.notation[1]
+			if 	self.Y > 0 and	theboard[self.X - 1][self.Y - 1][0] == "-":
+				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 			#Sağ üsttekinin kontrolü
-			if 	self.PawnY < 2 and	theboard[self.PawnX - 1][self.PawnY + 1][0] == "-":
-				action_string = str(self.PawnX) + str(self.PawnY) + str(self.PawnX - 1) + str(self.PawnY + 1) + self.notation[1]
+			if 	self.Y < 2 and	theboard[self.X - 1][self.Y + 1][0] == "-":
+				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + self.notation[1]
 				available_actions.append(ad.actions[action_string])
 
 
 		return available_actions
 
 class Rook():
-	def __init__(self, color, rookid):
-		self.color = color
-		self.rookid = rookid
-		self.IsActive = True
+	class_counter = 0
 
+	def __init__(self, color, x, y):
+		self.color = color
 		if color == "white":
 			self.notation = "+R"
-			self.RookBitonBoard = rookid*2 + 11
-			self.RookX = 5
-			self.RookY = rookid*2 - 4
 		elif color == "black":
 			self.notation = "-R"
-			self.RookBitonBoard = rookid*2
-			self.RookX = 0
-			self.RookY = rookid*2
 
-	def reset(self):
-		self.IsActive = True
+		self.X = x
+		self.Y = y
+		self.BitonBoard = coorToBitVector(x, y, self.notation)
+		self.id = Rook.class_counter
+        Rook.class_counter += 1
 
-		if self.color == "white":
-			self.RookBitonBoard = self.rookid*2 + 11
-			self.RookX = 5
-			self.RookY = self.rookid*2 - 4
-		elif self.color == "black":
-			self.RookBitonBoard = self.rookid*2
-			self.RookX = 0
-			self.RookY = self.rookid*2
-
-	def step(self, RookBitonBoard, newX, newY, IsCaptured=False):
-		self.RookBitonBoard = RookBitonBoard
-		self.PawnX = newX
-		self.PawnY = newY
-		self.IsActive = not IsCaptured
+	def step(self, BitonBoard, newX, newY, IsCaptured=False):
+		self.BitonBoard = BitonBoard
+		self.X = newX
+		self.Y = newY
 
 	def possibleActions(self, theboard)
 	#theboard is the board member in the MiniChess object
@@ -487,26 +455,26 @@ class Rook():
 		leftFlag = True
 		for i in range (1,3)
 			#Right
-			if rightFlag and self.RookY + i < 3:
-				if theboard[self.RookX][self.RookY + i] == "XX":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY + i) + self.notation[1]
+			if rightFlag and self.Y + i < 3:
+				if theboard[self.X][self.Y + i] == "XX":
+					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 
-				elif self.color == "white" and theboard[self.RookX][self.RookY + i][0] == "-" or self.color == "black" and theboard[self.RookX][self.RookY + i][0] == "+":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY + i) + self.notation[1]
+				elif self.color == "white" and theboard[self.X][self.Y + i][0] == "-" or self.color == "black" and theboard[self.X][self.Y + i][0] == "+":
+					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					rightFlag = False
 
 				else:
 					rightFlag = False
 			#Left
-			if leftFlag and self.RookY - i >= 0:
-				if theboard[self.RookX][self.RookY - i] == "XX":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY - i) + self.notation[1]
+			if leftFlag and self.Y - i >= 0:
+				if theboard[self.X][self.Y - i] == "XX":
+					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 
-				elif self.color == "white" and theboard[self.RookX][self.RookY - i][0] == "-" or self.color == "black" and theboard[self.RookX][self.RookY - i][0] == "+":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX) + str(self.RookY - i) + self.notation[1]
+				elif self.color == "white" and theboard[self.X][self.Y - i][0] == "-" or self.color == "black" and theboard[self.X][self.Y - i][0] == "+":
+					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					leftFlag = False
 
@@ -518,26 +486,26 @@ class Rook():
 		downFlag = True
 		for i in range (1,6)
 			#Down
-			if downFlag and self.RookX + i < 6:
-				if theboard[self.RookX + i][self.RookY] == "XX":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX + i) + str(self.RookY) + self.notation[1]
+			if downFlag and self.X + i < 6:
+				if theboard[self.X + i][self.Y] == "XX":
+					action_string = str(self.X) + str(self.Y) + str(self.X + i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 
-				elif self.color == "white" and theboard[self.RookX + i][self.RookY][0] == "-" or self.color == "black" and theboard[self.RookX + i][self.RookY][0] == "+":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX + i) + str(self.RookY) + self.notation[1]
+				elif self.color == "white" and theboard[self.X + i][self.Y][0] == "-" or self.color == "black" and theboard[self.X + i][self.Y][0] == "+":
+					action_string = str(self.X) + str(self.Y) + str(self.X + i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					downFlag = False
 
 				else:
 					downFlag = False
 			#Up
-			if upFlag and self.RookX - i >= 0:
-				if theboard[self.RookX - i][self.RookY] == "XX":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX - i) + str(self.RookY) + self.notation[1]
+			if upFlag and self.X - i >= 0:
+				if theboard[self.X - i][self.Y] == "XX":
+					action_string = str(self.X) + str(self.Y) + str(self.X - i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 
-				elif self.color == "white" and theboard[self.RookX - i][self.RookY][0] == "-" or self.color == "black" and theboard[self.RookX - i][self.RookY][0] == "+":
-					action_string = str(self.RookX) + str(self.RookY) + str(self.RookX - i) + str(self.RookY) + self.notation[1]
+				elif self.color == "white" and theboard[self.X - i][self.Y][0] == "-" or self.color == "black" and theboard[self.X - i][self.Y][0] == "+":
+					action_string = str(self.X) + str(self.Y) + str(self.X - i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					upFlag = False
 
