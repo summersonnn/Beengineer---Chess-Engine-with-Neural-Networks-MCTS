@@ -1,7 +1,6 @@
 import numpy as np 
 import random
 import torch
-import sys
 import actionsdefined as ad
 
 #MiniChess class'ı Board'ı temsil eder. 
@@ -166,18 +165,16 @@ class MiniChess():
 		self.bitVectorBoard[oldcoorBit] = 0
 
 		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
-		if len(current_action) == 6:
-			promoted = True 
-		else:
-			promoted = False
+		promoted = True if len(current_action) == 6 else False
 		
-		#If capture happened, 
+		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
 		capturedPieceNotation = self.board[int(current_action[2])][int(current_action[3])]
 		if capturedPieceNotation != "XX":
 			capturedPieceBit = coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			self.bitVectorBoard[capturedPieceBit] = 0
 			removeCapturedPiece(capturedPieceBit)
 
+		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
 		self.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
 		newcoorBit = coorToBitVector(int(current_action[2]), int(current_action[3]), pieceNotationAfterMove)
 		self.bitVectorBoard[newcoorBit] = 1
@@ -185,12 +182,14 @@ class MiniChess():
 		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
 		if not promoted:
 			for i in pieceList:
-				if i.X == int(current_action[0]) and i.Y == int(current_action[1]):
+				if i.BitonBoard == oldcoorBit:
 					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
-		#if promoted, create a new object
+		#if promoted, create a new object and kill the pawn object
 		else:
 			color = "white" if pieceNotationAfterMove[0] == "+" else "black"
 			pieceList += Rook(color, int(current_action[2]), int(current_action[3]))
+			#Not captured, but since promoted, pawn object must be deleted
+			removeCapturedPiece(oldcoorBit)
 
 		reward = 0
 		terminal = False
