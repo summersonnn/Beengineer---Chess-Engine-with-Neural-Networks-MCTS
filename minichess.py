@@ -187,7 +187,7 @@ class MiniChess():
 		#if promoted, create a new object and kill the pawn object
 		else:
 			color = "white" if pieceNotationAfterMove[0] == "+" else "black"
-			pieceList += Rook(color, int(current_action[2]), int(current_action[3]))
+			pieceList += Rook(color, int(current_action[2]), int(current_action[3]), self)	#Warning! Possible costly operation. Test it.
 			#Not captured, but since promoted, pawn object must be deleted
 			removeCapturedPiece(oldcoorBit)
 
@@ -427,7 +427,8 @@ class Pawn():
 class Rook():
 	class_counter = 0
 
-	def __init__(self, color, x, y):
+	#Minichess object is not NONE if the Rook is initalized via promotion
+	def __init__(self, color, x, y, MiniChessObject=None):
 		self.color = color
 		if color == "white":
 			self.notation = "+R"
@@ -439,6 +440,11 @@ class Rook():
 		self.BitonBoard = coorToBitVector(x, y, self.notation)
 		self.id = Rook.class_counter
         Rook.class_counter += 1
+
+        #Edit the minichess object, so that bitvector is updated after promotion
+        if MiniChessObject not None:
+        	MiniChessObject.bitVectorBoard[self.BitonBoard] = 1
+
 
 	def step(self, BitonBoard, newX, newY, IsCaptured=False):
 		self.BitonBoard = BitonBoard
