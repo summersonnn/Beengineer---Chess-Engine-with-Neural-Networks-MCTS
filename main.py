@@ -20,8 +20,8 @@ eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 51
-max_steps_per_episode = 501
+num_episodes = 1
+max_steps_per_episode = 1
 
 def train(policy_net, target_net):
 	global loss

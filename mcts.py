@@ -4,6 +4,9 @@ import math
 import hashlib
 import argparse
 import time
+import minichess as mic
+import actionsdefined as ad
+from copy import copy, deepcopy
 
 
 """
@@ -21,48 +24,93 @@ EXPAND_NUMBER = 5
 
 
 class State():
-	ALPHABET = ['a', 'b', 'c', 'ç', 'd', 'e', 'f', 'g', 'ğ', 'h', 'ı', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'r', 's', 'ş', 't', 'u', 'ü', 'v', 'y', 'z']
-	num_moves=29
-	def __init__(self, word="", moves=[]):
-		self.moves=moves
-		self.word = word
+	
+	def __init__(self, BoardObject, color):
+		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
+		self.BoardObject = BoardObject				# Minichess object
+		self.numberOfMoves = len(availableMoves)
+		self.moveCount = 0							#
+		self.color = color							# "white" or "black"
 	def next_state(self):
-		nextLetter = self.ALPHABET[random.randint(0, 28)]
-		next=State(self.word+nextLetter, self.moves)
+		next = deepcopy(self)
+		next.color = "white" if self.color == "black" else "black"
+		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves)] #e.g 
+
+		inv_actions = {v: k for k, v in ad.actions.items()}
+		current_action = inv_actions[nextActionNumber]
+		
+		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
+		pieceNotationBeforeMove = next.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
+		oldcoorBit = mic.coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
+		next.BoardObject.board[int(current_action[0])][int(current_action[1])] = "XX"
+		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
+
+		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
+		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
+		promoted = True if len(current_action) == 6 else False
+		ListToUse = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BoardObject.BlackPieceList
+		otherList = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BoardObject.BlackPieceList
+		
+		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
+		capturedPieceNotation = next.BoardObject.board[int(current_action[2])][int(current_action[3])]
+		if capturedPieceNotation != "XX":
+			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
+			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
+			next.BoardObject.removeCapturedPiece(capturedPieceBit, otherList)
+
+		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
+		next.BoardObject.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
+		newcoorBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), pieceNotationAfterMove)
+		next.BoardObject.bitVectorBoard[newcoorBit] = 1
+
+		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
+		if not promoted:
+			for i in ListToUse:
+				if i.BitonBoard == oldcoorBit:
+					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
+		#if promoted, create a new object and kill the pawn object
+		else:
+			ListToUse += Rook(color, int(current_action[2]), int(current_action[3]), self)	#Warning! Possible costly operation. Test it.
+			#Not captured, but since promoted, pawn object must be deleted
+			next.removeCapturedPiece(oldcoorBit, ListToUse)
+
+		next.moveCount += 1
+		next.BoardObject.calculate_available_actions(next.color)
 		return next
 	def terminal(self):
 		#Minichess için buradaki kontrol "action space 0'a düşmüşse (matsa)" olacak
-		if random.random() > 0.8:
+		if self.moveCount > 30 or len(self.board.WhitePieceList) == 0 or len(self.board.BlackPieceList) == 0:
 			return True
 		return False
 	def reward(self):
-		lastIndex = 0
-		reward = 0
-		for i in range(len(self.word)):
-			index = self.find_index(self.word[i])
-			if index <= lastIndex :
-				reward -= 1
-			else:
-				reward += 1
-			lastIndex = index
-
+		if len(board.WhitePieceList) == 0:
+			reward = 1 if self.color == "black" else -1
+		elif len(board.BlackPieceList) == 0:
+			reward = 1 if self.color == "white" else -1
+		elif self.moveCount > 30:
+			reward = 1 if (self.color == "white" and len(self.board.WhitePieceList) > len(self.board.BlackPieceList) or self.color == "black" and len(self.board.WhitePieceList) < len(self.board.BlackPieceList)) else -1
+		else: #eşitler
+			reward = 0
+		
 		return reward
 
-	def find_index(self, letter):
-		for i in range(len(self.ALPHABET)):
-			if(letter == self.ALPHABET[i]):
-				return i
-
 	def __hash__(self):
-		return int(hashlib.md5(str(self.word).encode('utf-8')).hexdigest(),16)
+		return int(hashlib.md5(self.board.encode('utf-8')).hexdigest(),16)
 	def __eq__(self,other):
 		if hash(self)==hash(other):
 			return True
 		return False
 	def __repr__(self):
-		s="Word: %s"%(self.word)
-		return s
-	
+		return self.board.print()
+	def __deepcopy__(self, memo): # memo is a dict of id's to copies
+		id_self = id(self)        # memoization avoids unnecesary recursion
+		_copy = memo.get(id_self)
+		if _copy is None:
+			_copy = type(self)(
+				deepcopy(self.a, memo), 
+				deepcopy(self.b, memo))
+			memo[id_self] = _copy 
+		return _copy	
 
 class Node():
 	def __init__(self, state, parent=None):
@@ -71,8 +119,8 @@ class Node():
 		self.state=state
 		self.children=[]
 		self.parent=parent	
-	def add_child(self,child_state):
-		child=Node(child_state,self)
+	def add_child(self, child_state):
+		child = Node(child_state, self)
 		self.children.append(child)
 	def __repr__(self):
 		s="Node; children: %d; visits: %d; Cum reward: %f Avg reward: %.2f"%(len(self.children),self.visits,self.reward, self.reward/self.visits)
@@ -141,18 +189,13 @@ def BACKUP(node,reward):
 		node=node.parent
 	return
 
-if __name__=="__main__":
-	
-	root=Node(State())
+def initializeTree(boardobject, color, timeout):
+	root = Node(State(boardobject, color))
 	root.visits = 1
-
-	timeout = 2   # [seconds]
-	
-	for i in range(5):
-		result = UCTSEARCH(root, timeout)
-		print("At %d level, state: %s" %(i+1, result.state.word))
-		print("At this level, all nodes looks like the following: ")
-		for i,c in enumerate(root.children):
-			print(i,c)
-		root = result
-		print("\n")
+	result = UCTSEARCH(root, timeout)
+	print("At %d level, state: %s" %(i+1, result.state.word))
+	print("At this level, all nodes looks like the following: ")
+	for i,c in enumerate(root.children):
+		print(i,c)
+	root = result
+	print("\n")

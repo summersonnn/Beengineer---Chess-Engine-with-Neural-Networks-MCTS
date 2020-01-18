@@ -2,6 +2,7 @@ import numpy as np
 import random
 import torch
 import actionsdefined as ad
+import mcts
 
 #MiniChess class'ı Board'ı temsil eder. 
 class MiniChess():
@@ -161,7 +162,7 @@ class MiniChess():
 		print("----------------------STEP------------------")
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[action]
-		#We got the action number, e.g 112
+		#We got the action string e.g "0201K"
 		#Now we will edit the board and pass the resulting board to MCSearchTree so that it can return us a reward
 
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
@@ -171,6 +172,7 @@ class MiniChess():
 		self.bitVectorBoard[oldcoorBit] = 0
 
 		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
+		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
 		promoted = True if len(current_action) == 6 else False
 		ListToUse = self.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BlackPieceList
 		otherList = self.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BlackPieceList
@@ -194,16 +196,14 @@ class MiniChess():
 					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
 		#if promoted, create a new object and kill the pawn object
 		else:
-			color = "white" if pieceNotationAfterMove[0] == "+" else "black"
-			pieceList += Rook(color, int(current_action[2]), int(current_action[3]), self)	#Warning! Possible costly operation. Test it.
+			ListToUse += Rook(color, int(current_action[2]), int(current_action[3]), self)	#Warning! Possible costly operation. Test it.
 			#Not captured, but since promoted, pawn object must be deleted
 			self.removeCapturedPiece(oldcoorBit, ListToUse)
 
 		reward = 0
 		terminal = False
 
-		print("STOPPPPPPPPPPPPPP")
-		A
+		mcts.initializeTree(self, color, 5)
 		#Yeni durumdaki board'ı MCTS'ye, süreyle birlikte ver. 
 		#İlk etapta NN'i kullanmayıp MCTS'yi test edelim. Bunun için sürekli explore etmesini sağlayacağım.
 		#Bu durumda reward ve terminal hiçbir şey ifade etmeyeceği için, değiştirmiyoruz, 0 kalsınlar.
