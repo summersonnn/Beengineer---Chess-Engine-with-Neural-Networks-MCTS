@@ -15,12 +15,12 @@ class MiniChess():
 							["+R", "+K", "+R"],
 						]
 
-		self.bitVectorBoard = [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0				#18 (siyah şah)
-								0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0				#36 (siyah piyonlar)
-								1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0				#54 (siyah kaleler)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0				#72 (beyaz şah)
-								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0				#90 (beyaz piyonlar)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1]			#108 (beyaz kaleler)
+		self.bitVectorBoard = [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,					#18 (siyah şah)
+								0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,				#36 (siyah piyonlar)
+								1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,				#54 (siyah kaleler)
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,				#72 (beyaz şah)
+								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,				#90 (beyaz piyonlar)
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1]				#108 (beyaz kaleler)
 
 		'''self.board =  	[
 								["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],
@@ -72,7 +72,8 @@ class MiniChess():
 
 		#Colour, Totalmovecount, P1-castling, P2-castling, No-progress count sonradan eklenecek
 		
-		self.pieceList = [King("black"), Pawn("black", 0), Pawn("black", 1), Pawn("black", 2), Rook("black", 0), Rook("black", 1), King("white"), Pawn("white", 3), Pawn("white", 4), Pawn("white", 5), Rook("white", 2), Rook("white", 3)]
+		self.WhitePieceList = [King("white", 5, 1), Pawn("white", 4, 0), Pawn("white", 4, 1), Pawn("white", 4, 2), Rook("white", 5, 0), Rook("white", 5, 2)]
+		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
 		self.available_actions = []
 		self.ThreatedSquares = []
 		self.device = device
@@ -89,12 +90,12 @@ class MiniChess():
 							["+R", "+K", "+R"],
 						]
 
-		self.bitVectorBoard = [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0				#18 (siyah şah)
-								0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0				#36 (siyah piyonlar)
-								1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0				#54 (siyah kaleler)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0				#72 (beyaz şah)
-								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0				#90 (beyaz piyonlar)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1]			#108 (beyaz kaleler)
+		self.bitVectorBoard = [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,					#18 (siyah şah)
+								0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,				#36 (siyah piyonlar)
+								1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,				#54 (siyah kaleler)
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,				#72 (beyaz şah)
+								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,				#90 (beyaz piyonlar)
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1]				#108 (beyaz kaleler)
 
 		'''self.board =  	[
 							["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],
@@ -144,15 +145,20 @@ class MiniChess():
 							0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0]	#704-768 (beyaz vezir)'''
 
 		self.available_actions = []
-		for i in pieceList:
+		for i in self.WhitePieceList:
 			del i
-		self.pieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2), King("white", 5, 1), Pawn("white", 4, 0), Pawn("white", 4, 1), Pawn("white", 4, 2), Rook("white", 5, 0), Rook("white", 5, 2)]
-		self.ThreatedSquares = []
+		for i in self.BlackPieceList:
+			del i
+		self.WhitePieceList = [King("white", 5, 1), Pawn("white", 4, 0), Pawn("white", 4, 1), Pawn("white", 4, 2), Rook("white", 5, 0), Rook("white", 5, 2)]
+		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
+		self.ThreatedSquaresByWhite = []
+		self.ThreatedSquaresByBlack = []
 
 		return None
 
 	#Şah'a bir adım attırır ve tahtayı düzenler. Ayrıca Şah objesinin step fonksiyonunu çağırır ve onun da kendisini düzenlemesini sağlar.
 	def step(self, action):
+		print("----------------------STEP------------------")
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[action]
 		#We got the action number, e.g 112
@@ -166,13 +172,15 @@ class MiniChess():
 
 		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
 		promoted = True if len(current_action) == 6 else False
+		ListToUse = self.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BlackPieceList
+		otherList = self.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BlackPieceList
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
 		capturedPieceNotation = self.board[int(current_action[2])][int(current_action[3])]
 		if capturedPieceNotation != "XX":
 			capturedPieceBit = coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			self.bitVectorBoard[capturedPieceBit] = 0
-			removeCapturedPiece(capturedPieceBit)
+			self.removeCapturedPiece(capturedPieceBit, otherList)
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
 		self.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
@@ -181,7 +189,7 @@ class MiniChess():
 
 		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
 		if not promoted:
-			for i in pieceList:
+			for i in ListToUse:
 				if i.BitonBoard == oldcoorBit:
 					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
 		#if promoted, create a new object and kill the pawn object
@@ -189,49 +197,33 @@ class MiniChess():
 			color = "white" if pieceNotationAfterMove[0] == "+" else "black"
 			pieceList += Rook(color, int(current_action[2]), int(current_action[3]), self)	#Warning! Possible costly operation. Test it.
 			#Not captured, but since promoted, pawn object must be deleted
-			removeCapturedPiece(oldcoorBit)
+			self.removeCapturedPiece(oldcoorBit, ListToUse)
 
 		reward = 0
 		terminal = False
 
-		#OYUN AMACINI TASARLA. ONA GORE REWARD MEKANIZMASI KUR
-		#Şimdilik amacımız Şah'ın en üste çıkması olduğundan, X koordinatı 0 ise oyun biter.
-		'''if 	self.WhiteKingBitonBoard < 8:	#self.WhiteX == 0:
-			reward += 10000
-			terminal = True
-		else:
-			reward -= 10;
+		print("STOPPPPPPPPPPPPPP")
+		A
+		#Yeni durumdaki board'ı MCTS'ye, süreyle birlikte ver. 
+		#İlk etapta NN'i kullanmayıp MCTS'yi test edelim. Bunun için sürekli explore etmesini sağlayacağım.
+		#Bu durumda reward ve terminal hiçbir şey ifade etmeyeceği için, değiştirmiyoruz, 0 kalsınlar.
 
-		return None, reward, terminal'''
+		return reward, terminal
 
-	def coorToBitVector(self, x, y, notation):
-		coor = x*3 + y
-		if notation == "+K":
-			return coor
-		elif notation == "+P":
-			return coor + 18
-		elif notation == "+R":
-			return coor + 36
-		elif notation == "-K":
-			return coor + 54
-		elif notation == "-P":
-			return coor + 72
-		elif notation == "-R":
-			return coor + 90
-
-	def removeCapturedPiece(self, BitonBoard):
-		for index,i in enumerate(pieceList,0):
+	def removeCapturedPiece(self, BitonBoard, incomingList):
+		for index,i in enumerate(incomingList,0):
 			if i.BitonBoard == BitonBoard:
 				indexToBeDeleted = index
 				break
-		del pieceList[indexToBeDeleted]
+		del incomingList[indexToBeDeleted]
 
 	#Tehdit edilen kareler hesaplanıyor
-	def calculateThreatedSquares(self):
+	def calculateThreatedSquares(self, color):
 		#Burada her bir karşı alet için hesap yapılacak. Şimdilik default pozisyondaki tehdit edilen kareleri hardcoded verelim.
-		ThreatedSquares = [16, 17, 18, 19, 20, 21, 22, 23]	
-		return ThreatedSquares
-
+		if color == "white":
+			return [65,65,65]	
+		elif color == "black":
+			return [65,65,65]
 	#Tahtayı yazdırır.
 	def print(self):
 		for i in range(6):
@@ -242,27 +234,23 @@ class MiniChess():
 	#Main'den ilk bu çağrılır
 	#Sıra: C_A_A -> C_P_M -> King.P_M
 	def calculate_available_actions(self, forColor):
-		self.ThreatedSquares = self.calculateThreatedSquares()
+		self.ThreatedSquares = self.calculateThreatedSquares(forColor)
 		
 		if forColor == "white":
-			self.available_actions = self.WhiteKing.possibleActions(self.ThreatedSquares)
-			self.available_actions += self.White_A_Pawn.possibleActions()
-			self.available_actions += self.White_B_Pawn.possibleActions()
-			self.available_actions += self.White_C_Pawn.possibleActions()
-			self.available_actions += self.White_A_Rook.possibleActions()
-			self.available_actions += self.White_C_Rook.possibleActions()
+			self.available_actions += self.WhitePieceList[0].possibleActions(self.board, self.ThreatedSquares)
+			for i in self.WhitePieceList[1:]:
+				self.available_actions += i.possibleActions(self.board)
+
 		elif forColor == "black":
-			self.available_actions = self.BlackKing.possibleActions(self.ThreatedSquares)
-			self.available_actions += self.Black_A_Pawn.possibleActions()
-			self.available_actions += self.Black_B_Pawn.possibleActions()
-			self.available_actions += self.Black_C_Pawn.possibleActions()
-			self.available_actions += self.Black_A_Rook.possibleActions()
-			self.available_actions += self.Black_C_Rook.possibleActions()
+			self.available_actions += self.BlackPieceList[0].possibleActions(self.board, self.ThreatedSquares)
+			for i in self.BlackPieceList:
+				self.available_actions += i.possibleActions(self.board)
+
 		return self.available_actions
 
 	#Tensor coming in, tensor coming out
 	def take_action(self, action):
-		_, reward, terminal = self.step(action.item())
+		reward, terminal = self.step(action.item())
 		return torch.from_numpy(np.array([reward], dtype=np.float32)).unsqueeze(0), terminal
 
 	def get_state(self):
@@ -288,7 +276,7 @@ class King():
 		self.Y = y
 		self.BitonBoard = coorToBitVector(x, y, self.notation)
 		self.id = King.class_counter
-        King.class_counter += 1
+		King.class_counter += 1
 
 	#MiniChess'teki step fonksiyonu tarafından çağrılır. Şah'ın pozisyonunu düzenler.
 	def step(self, BitonBoard, newX, newY):
@@ -296,41 +284,41 @@ class King():
 		self.X = newX
 		self.Y = newY
 
-	def possibleActions(self, ThreatedSquares):
+	def possibleActions(self, theboard, ThreatedSquares):
 		available_actions = []
 		top = False
 		bottom = False
 		right = False
 
 		#Üst kontrol
-		if 	self.BitonBoard > 2 :	#Tek renk şah için çalışır durumda. Diğer şahın bit aralık değerleri farklı olacak.
+		if 	self.X > 0 and (theboard[self.X - 1][self.Y][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y][0] != "-" and self.color == "black"):
 			action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y) + str(self.notation[1])
 			available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 3) not in ThreatedSquares else 1==1
 			top = True
 		#Sağ Kontrol
-		if 	(self.BitonBoard + 1) % 3 != 0:		#self.Y + 1 <= 7:
+		if 	self.Y < 2 and (theboard[self.X][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X][self.Y + 1][0] != "-" and self.color == "black"):
 			action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + 1) + str(self.notation[1])
 			available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 1) not in ThreatedSquares else 1==1
 			right = True
-			if top:	#Sag-ust
+			if top and (theboard[self.X - 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y + 1][0] != "-" and self.color == "black"):	#Sag-ust
 				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 2) not in ThreatedSquares else 1==1
 		#Alt Kontrol
-		if 	self.BitonBoard < 15:		#self.X + 1 <= 7:
+		if 	self.X < 5 and (theboard[self.X + 1][self.Y][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y][0] != "-" and self.color == "black"):
 			action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + str(self.notation[1])
 			available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 3) not in ThreatedSquares else 1==1
 			bottom = True
-			if right:	#Sag-alt
+			if right and (theboard[self.X + 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y + 1][0] != "-" and self.color == "black"):	#Sag-alt
 				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 4) not in ThreatedSquares else 1==1
 		#Sol Kontrol
-		if 	self.BitonBoard % 3 != 0:		#self.Y - 1 >= 0:
+		if 	self.Y > 0 and (theboard[self.X][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X][self.Y - 1][0] != "-" and self.color == "black"):
 			action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - 1) + str(self.notation[1])
 			available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 1) not in ThreatedSquares else 1==1
-			if top:	#Sol-üst
+			if top and (theboard[self.X - 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y - 1][0] != "-" and self.color == "black"):	#Sol-üst
 				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 4) not in ThreatedSquares else 1==1
-			if bottom:	#Sol-alt
+			if bottom and (theboard[self.X + 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y - 1][0] != "-" and self.color == "black"):	#Sol-alt
 				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 2) not in ThreatedSquares else 1==1
 
@@ -350,14 +338,14 @@ class Pawn():
 		self.Y = y
 		self.BitonBoard = coorToBitVector(x, y, self.notation)
 		self.id = Pawn.class_counter
-        Pawn.class_counter += 1
+		Pawn.class_counter += 1
 
 	def step(self, BitonBoard, newX, newY):
 		self.BitonBoard = BitonBoard
 		self.X = newX
 		self.Y = newY
 
-	def possibleActions(self, theboard)
+	def possibleActions(self, theboard):
 	#theboard is the board member in the MiniChess object
 		available_actions = []
 
@@ -439,11 +427,11 @@ class Rook():
 		self.Y = y
 		self.BitonBoard = coorToBitVector(x, y, self.notation)
 		self.id = Rook.class_counter
-        Rook.class_counter += 1
-
-        #Edit the minichess object, so that bitvector is updated after promotion
-        if MiniChessObject not None:
-        	MiniChessObject.bitVectorBoard[self.BitonBoard] = 1
+		Rook.class_counter += 1
+		
+		#Edit the minichess object, so that bitvector is updated after promotion
+		if MiniChessObject != None:
+			MiniChessObject.bitVectorBoard[self.BitonBoard] = 1
 
 
 	def step(self, BitonBoard, newX, newY, IsCaptured=False):
@@ -451,14 +439,14 @@ class Rook():
 		self.X = newX
 		self.Y = newY
 
-	def possibleActions(self, theboard)
+	def possibleActions(self, theboard):
 	#theboard is the board member in the MiniChess object
 		available_actions = []
 		
 		#horizontal
 		rightFlag = True
 		leftFlag = True
-		for i in range (1,3)
+		for i in range (1,3):
 			#Right
 			if rightFlag and self.Y + i < 3:
 				if theboard[self.X][self.Y + i] == "XX":
@@ -489,7 +477,7 @@ class Rook():
 		#vertical
 		upFlag = True
 		downFlag = True
-		for i in range (1,6)
+		for i in range (1,6):
 			#Down
 			if downFlag and self.X + i < 6:
 				if theboard[self.X + i][self.Y] == "XX":
@@ -518,6 +506,22 @@ class Rook():
 					upFlag = False
 
 		return available_actions
+
+
+def coorToBitVector(x, y, notation):
+		coor = x*3 + y
+		if notation == "+K":
+			return coor
+		elif notation == "+P":
+			return coor + 18
+		elif notation == "+R":
+			return coor + 36
+		elif notation == "-K":
+			return coor + 54
+		elif notation == "-P":
+			return coor + 72
+		elif notation == "-R":
+			return coor + 90
 
 
 

@@ -20,7 +20,7 @@ eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 501
+num_episodes = 51
 max_steps_per_episode = 501
 
 def train(policy_net, target_net):
@@ -33,7 +33,7 @@ def train(policy_net, target_net):
 
 		for step in range(1, max_steps_per_episode):
 			#print("Humanistic state: " + str(em.get_humanistic_state()))
-			available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
+			available_actions = em.calculate_available_actions("white")	#Deciding the possible actions. Illegal actions are not taken into account
 			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
 			next_state = em.get_state()	#get the new state
