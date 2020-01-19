@@ -106,7 +106,7 @@ class State():
 		return reward
 
 	def __hash__(self):
-		return int(hashlib.md5(self.board.encode('utf-8')).hexdigest(),16)
+		return int(hashlib.md5(self.exclusive_board_string.encode('utf-8')).hexdigest(),16)
 	def __eq__(self,other):
 		if hash(self)==hash(other):
 			return True
