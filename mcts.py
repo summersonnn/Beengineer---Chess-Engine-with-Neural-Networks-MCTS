@@ -31,13 +31,22 @@ class State():
 		self.numberOfMoves = len(availableMoves)
 		self.moveCount = 0							#
 		self.color = color							# "white" or "black"
+		self.exclusive_board_string = ""  			# It will be calculated once the board representation is changed at the next_state function
+
+	def build_exclusive_string(self):
+		self.exclusive_board_string =""
+		for i in range(6):
+			for j in range(3):
+				self.exclusive_board_string += self.BoardObject.board[i][j]
+			
 	def next_state(self):
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
-		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves)] #e.g 
+		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves)] #e.g 145
 
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[nextActionNumber]
+		del inv_actions
 		
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = next.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
@@ -74,6 +83,7 @@ class State():
 			#Not captured, but since promoted, pawn object must be deleted
 			next.removeCapturedPiece(oldcoorBit, ListToUse)
 
+		next.build_exclusive_string()	#New exclusive string is constructed, ready for being hashed
 		next.moveCount += 1	#In the new node, movecount will be one more
 		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
 		next.availableActions = next.BoardObject.calculate_available_actions(next.color)	#Calc new available actions for the board object and pass it to State object member
@@ -102,16 +112,7 @@ class State():
 			return True
 		return False
 	def __repr__(self):
-		return self.board.print()
-	def __deepcopy__(self, memo): # memo is a dict of id's to copies
-		id_self = id(self)        # memoization avoids unnecesary recursion
-		_copy = memo.get(id_self)
-		if _copy is None:
-			_copy = type(self)(
-				deepcopy(self.a, memo), 
-				deepcopy(self.b, memo))
-			memo[id_self] = _copy 
-		return _copy	
+		return self.board.print()	
 
 class Node():
 	def __init__(self, state, parent=None):
@@ -192,7 +193,9 @@ def BACKUP(node,reward):
 
 def initializeTree(boardobject, color, timeout):
 	root = Node(State(boardobject, color))
+	root.State.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
 	root.visits = 1
+
 	result = UCTSEARCH(root, timeout)
 	print("At %d level, state: %s" %(i+1, result.state.word))
 	print("At this level, all nodes looks like the following: ")

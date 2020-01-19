@@ -162,6 +162,7 @@ class MiniChess():
 		print("----------------------STEP------------------")
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[action]
+		del inv_actions
 		#We got the action string e.g "0201K"
 		#Now we will edit the board and pass the resulting board to MCSearchTree so that it can return us a reward
 
