@@ -218,13 +218,13 @@ class MiniChess():
 				break
 		del incomingList[indexToBeDeleted]
 
-	#Tehdit edilen kareler hesaplanıyor
+	#Tehdit edilen kareler hesaplanıyor, bitvector listesi olarak.
 	def calculateThreatedSquares(self, color):
 		#Burada her bir karşı alet için hesap yapılacak. Şimdilik default pozisyondaki tehdit edilen kareleri hardcoded verelim.
 		if color == "white":
-			return [65,65,65]	
+			return calculate_available_actions("black", True)	
 		elif color == "black":
-			return [65,65,65]
+			return calculate_available_actions("white", True)
 	#Tahtayı yazdırır.
 	def print(self):
 		for i in range(6):
@@ -234,16 +234,20 @@ class MiniChess():
 
 	#Main'den ilk bu çağrılır
 	#Sıra: C_A_A -> C_P_M -> King.P_M
-	def calculate_available_actions(self, forColor):
-		self.ThreatedSquares = self.calculateThreatedSquares(forColor)
+	def calculate_available_actions(self, forColor, IsForCalculatingThreats=False):
+		self.available_actions.clear()
+		if not IsForCalculatingThreats:
+			self.ThreatedSquares = self.calculateThreatedSquares(forColor)
+		else:
+			dummylist = []
 		
 		if forColor == "white":
-			self.available_actions += self.WhitePieceList[0].possibleActions(self.board, self.ThreatedSquares)
+			self.available_actions += self.WhitePieceList[0].possibleActions(self.board, self.ThreatedSquares if not IsForCalculatingThreats else dummylist)
 			for i in self.WhitePieceList[1:]:
 				self.available_actions += i.possibleActions(self.board, self.WhitePieceList[0])
 
 		elif forColor == "black":
-			self.available_actions += self.BlackPieceList[0].possibleActions(self.board, self.ThreatedSquares)
+			self.available_actions += self.BlackPieceList[0].possibleActions(self.board, self.ThreatedSquares if not IsForCalculatingThreats else dummylist)
 			for i in self.BlackPieceList:
 				self.available_actions += i.possibleActions(self.board, self.BlackPieceList[0])
 
