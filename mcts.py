@@ -74,8 +74,9 @@ class State():
 			#Not captured, but since promoted, pawn object must be deleted
 			next.removeCapturedPiece(oldcoorBit, ListToUse)
 
-		next.moveCount += 1
-		next.BoardObject.calculate_available_actions(next.color)
+		next.moveCount += 1	#In the new node, movecount will be one more
+		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
+		next.availableActions = next.BoardObject.calculate_available_actions(next.color)	#Calc new available actions for the board object and pass it to State object member
 		return next
 	def terminal(self):
 		#Minichess için buradaki kontrol "action space 0'a düşmüşse (matsa)" olacak
