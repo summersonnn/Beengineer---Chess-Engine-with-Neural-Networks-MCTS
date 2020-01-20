@@ -28,7 +28,7 @@ class State():
 	def __init__(self, BoardObject, color):
 		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
 		self.BoardObject = BoardObject				# Minichess object
-		self.numberOfMoves = len(availableMoves)
+		self.numberOfMoves = len(self.availableActions)
 		self.moveCount = 0							#
 		self.color = color							# "white" or "black"
 		self.exclusive_board_string = ""  			# It will be calculated once the board representation is changed at the next_state function
@@ -40,20 +40,20 @@ class State():
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
 	def next_state(self):
+		print("--------------next_state function-------------")
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
-		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves)] #e.g 145
+		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves - 1)] #e.g 145
 
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[nextActionNumber]
+		print("Current_action:" + current_action)
 		del inv_actions
 		
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = next.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
 		oldcoorBit = mic.coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
-		next.BoardObject.board[int(current_action[0])][int(current_action[1])] = "XX"
-		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
-
+		
 		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
 		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
 		promoted = True if len(current_action) == 6 else False
@@ -61,16 +61,22 @@ class State():
 		otherList = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BoardObject.BlackPieceList
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
-		capturedPieceNotation = next.BoardObject.board[int(current_action[2])][int(current_action[3])]
+		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
+
 		if capturedPieceNotation != "XX":
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, otherList)
+			
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
 		next.BoardObject.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
+		print(pieceNotationAfterMove)
 		newcoorBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), pieceNotationAfterMove)
 		next.BoardObject.bitVectorBoard[newcoorBit] = 1
+
+		next.BoardObject.board[int(current_action[0])][int(current_action[1])] = "XX"
+		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
 
 		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
 		if not promoted:
@@ -87,10 +93,11 @@ class State():
 		next.moveCount += 1	#In the new node, movecount will be one more
 		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
 		next.availableActions = next.BoardObject.calculate_available_actions(next.color)	#Calc new available actions for the board object and pass it to State object member
+		next.numberOfMoves = len(next.availableActions)
 		return next
 	def terminal(self):
 		#Minichess için buradaki kontrol "action space 0'a düşmüşse (matsa)" olacak
-		if self.moveCount > 30 or len(self.board.WhitePieceList) == 0 or len(self.board.BlackPieceList) == 0:
+		if self.moveCount > 30 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0:
 			return True
 		return False
 	def reward(self):
@@ -193,7 +200,7 @@ def BACKUP(node,reward):
 
 def initializeTree(boardobject, color, timeout):
 	root = Node(State(boardobject, color))
-	root.State.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
+	root.state.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
 	root.visits = 1
 
 	result = UCTSEARCH(root, timeout)

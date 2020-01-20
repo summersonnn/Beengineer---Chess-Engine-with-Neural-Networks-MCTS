@@ -9,6 +9,7 @@ import dqn
 import minichess
 import unrelatedmethods
 import fileoperations
+import mcts
 
 
 PATH_TO_DIRECTORY = "pretrained_model/"
@@ -26,14 +27,17 @@ max_steps_per_episode = 1
 def train(policy_net, target_net):
 	global loss
 	steps_per_episode = []	#counts how many steps played in each episode
-	for episode in range(past_episodes + 1, num_episodes + past_episodes):
+	for episode in range(past_episodes, num_episodes + past_episodes):
 		print("Episode number: " + str(episode))
 		em.reset()	#reset the environment to start all over again
 		state = em.get_state()	#get the first state from the environment as a tensor 
 
-		for step in range(1, max_steps_per_episode):
+		for step in range(max_steps_per_episode):
 			#print("Humanistic state: " + str(em.get_humanistic_state()))
+			print("-----------Training Starts-----------")
 			available_actions = em.calculate_available_actions("white")	#Deciding the possible actions. Illegal actions are not taken into account
+			mcts.initializeTree(em, "white", 5)
+			raise ValueError('-----A very specific bad thing happened.-----')
 			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
 			next_state = em.get_state()	#get the new state
