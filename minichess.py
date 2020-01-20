@@ -75,8 +75,6 @@ class MiniChess():
 		
 		self.WhitePieceList = [King("white", 5, 1), Pawn("white", 4, 0), Pawn("white", 4, 1), Pawn("white", 4, 2), Rook("white", 5, 0), Rook("white", 5, 2)]
 		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
-		self.available_actions = []
-		self.ThreatedSquares = []
 		self.device = device
 
 	#Tahtayı başlangıç pozisyonuna getirir. Sonuç olarak, state number'ı döndürür.
@@ -232,26 +230,24 @@ class MiniChess():
 				print(self.board[i][j], end=" ")
 			print(" ")
 
-	#Main'den ilk bu çağrılır
-	#Sıra: C_A_A -> C_P_M -> King.P_M
+	#If last element is True, this function calculates vectorbits of threated squares, if False, available actions.
 	def calculate_available_actions(self, forColor, IsForCalculatingThreats=False):
-		self.available_actions.clear()
+		available_actions = []
+		ThreatedSquares = []
 		if not IsForCalculatingThreats:
-			self.ThreatedSquares = self.calculateThreatedSquares(forColor)
-		else:
-			dummylist = []
+			ThreatedSquares = self.calculateThreatedSquares(forColor)
 		
 		if forColor == "white":
-			self.available_actions += self.WhitePieceList[0].possibleActions(self.board, self.ThreatedSquares if not IsForCalculatingThreats else dummylist)
+			available_actions += self.WhitePieceList[0].possibleActions(self.board, ThreatedSquares)
 			for i in self.WhitePieceList[1:]:
-				self.available_actions += i.possibleActions(self.board, self.WhitePieceList[0])
+				available_actions += i.possibleActions(self.board, self.WhitePieceList[0])
 
 		elif forColor == "black":
-			self.available_actions += self.BlackPieceList[0].possibleActions(self.board, self.ThreatedSquares if not IsForCalculatingThreats else dummylist)
+			available_actions += self.BlackPieceList[0].possibleActions(self.board, ThreatedSquares)
 			for i in self.BlackPieceList:
-				self.available_actions += i.possibleActions(self.board, self.BlackPieceList[0])
+				available_actions += i.possibleActions(self.board, self.BlackPieceList[0])
 
-		return self.available_actions
+		return available_actions
 
 	#Tensor coming in, tensor coming out
 	def take_action(self, action):
