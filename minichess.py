@@ -313,7 +313,7 @@ class King():
 				action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 1) not in ThreatedSquares else None
 				#Sag-ust
-				if theboard[self.X - 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y + 1][0] != "-" and self.color == "black":	
+				if self.X > 0 and (theboard[self.X - 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y + 1][0] != "-" and self.color == "black"):
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + str(self.notation[1])
 					available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 2) not in ThreatedSquares else None
 		#Alt Kontrol
@@ -324,7 +324,7 @@ class King():
 				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 3) not in ThreatedSquares else None
 				#Sag-alt
-				if theboard[self.X + 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y + 1][0] != "-" and self.color == "black":	
+				if self.Y < 2 and (theboard[self.X + 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y + 1][0] != "-" and self.color == "black"):	
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + str(self.notation[1])
 					available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 4) not in ThreatedSquares else None
 		#Sol Kontrol
@@ -335,11 +335,11 @@ class King():
 				action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 1) not in ThreatedSquares else None
 				#Sol-üst
-				if theboard[self.X - 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y - 1][0] != "-" and self.color == "black":	
+				if self.X > 0 and (theboard[self.X - 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y - 1][0] != "-" and self.color == "black"):		
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + str(self.notation[1])
 					available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 4) not in ThreatedSquares else None
 				#Sol-alt
-				if theboard[self.X + 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y - 1][0] != "-" and self.color == "black":	
+				if self.X < 5 and (theboard[self.X + 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y - 1][0] != "-" and self.color == "black"):		
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + str(self.notation[1])
 					available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 2) not in ThreatedSquares else None
 
@@ -430,6 +430,7 @@ class Pawn():
 
 	#When switched to full board, check the cases where slope is 1 or -1. There is no need to check for them since there are no bishop or queens to threat the king.
 	def IsOkayForKingSafety(self, theboard, FriendlyKing, candidateX, candidateY):
+		print("FriendlyKing: " + str(FriendlyKing))
 		DistanceVertical = self.X - FriendlyKing.X
 		DistanceHorizontal = self.Y - FriendlyKing.Y
 		isXGreaterThanKing = 1 if DistanceVertical > 0 else -1

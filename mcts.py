@@ -20,7 +20,7 @@ In particular there are two models of best child that one can use
 
 #MCTS scalar.  Larger scalar will increase exploitation, smaller will increase exploration. 
 SCALAR=2
-EXPAND_NUMBER = 5
+EXPAND_NUMBER = 2
 
 
 class State():
@@ -41,37 +41,46 @@ class State():
 			
 	def next_state(self):
 		print("--------------next_state function-------------")
+		self.BoardObject.print()
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
 		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves - 1)] #e.g 145
 
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[nextActionNumber]
-		print("Current_action:" + current_action)
+		for i in self.availableActions:
+			print("Available actions: " + inv_actions[i])
+
+		print("\n")
+		#print("Current_action:" + current_action)
 		del inv_actions
 		
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
-		pieceNotationBeforeMove = next.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
+		pieceNotationBeforeMove = self.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
 		oldcoorBit = mic.coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
 		
 		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
 		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
 		promoted = True if len(current_action) == 6 else False
-		ListToUse = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BoardObject.BlackPieceList
-		otherList = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BoardObject.BlackPieceList
+		ListToUse = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '+' else next.BoardObject.BlackPieceList
+		otherList = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '-' else next.BoardObject.BlackPieceList
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
 
 		if capturedPieceNotation != "XX":
+			#print("Before going removal function")
+			#print(otherList)
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, otherList)
+			#print("Afte coming from removal function")
+			#print(otherList)
 			
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
 		next.BoardObject.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
-		print(pieceNotationAfterMove)
+		#print("Piece notation after move: " + pieceNotationAfterMove)
 		newcoorBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), pieceNotationAfterMove)
 		next.BoardObject.bitVectorBoard[newcoorBit] = 1
 
@@ -85,28 +94,33 @@ class State():
 					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
 		#if promoted, create a new object and kill the pawn object
 		else:
-			ListToUse += Rook(color, int(current_action[2]), int(current_action[3]), self)	#Warning! Possible costly operation. Test it.
+			ListToUse.append(mic.Rook(color, int(current_action[2]), int(current_action[3]), self.BoardObject))	#Warning! Possible costly operation. Test it.
 			#Not captured, but since promoted, pawn object must be deleted
-			next.removeCapturedPiece(oldcoorBit, ListToUse)
+			next.BoardObject.removeCapturedPiece(oldcoorBit, ListToUse)
 
 		next.build_exclusive_string()	#New exclusive string is constructed, ready for being hashed
 		next.moveCount += 1	#In the new node, movecount will be one more
 		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
-		next.availableActions = next.BoardObject.calculate_available_actions(next.color)	#Calc new available actions for the board object and pass it to State object member
-		next.numberOfMoves = len(next.availableActions)
+		
+		if next.terminal() == False:
+			next.availableActions = next.BoardObject.calculate_available_actions(next.color)	#Calc new available actions for the board object and pass it to State object member
+			next.numberOfMoves = len(next.availableActions)
 		return next
 	def terminal(self):
 		#Minichess için buradaki kontrol "action space 0'a düşmüşse (matsa)" olacak
-		if self.moveCount > 30 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0:
+		ListToUse = self.BoardObject.WhitePieceList if self.color == "white" else self.BoardObject.BlackPieceList
+
+		#Last condition was for checking if the King is captured or not. But in full mode, King can't be captured, change this.
+		if self.moveCount > 30 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0 or ListToUse[0].notation[1] != "K":
 			return True
 		return False
 	def reward(self):
-		if len(board.WhitePieceList) == 0:
+		if len(self.BoardObject.WhitePieceList) == 0:
 			reward = 1 if self.color == "black" else -1
-		elif len(board.BlackPieceList) == 0:
+		elif len(self.BoardObject.BlackPieceList) == 0:
 			reward = 1 if self.color == "white" else -1
 		elif self.moveCount > 30:
-			reward = 1 if (self.color == "white" and len(self.board.WhitePieceList) > len(self.board.BlackPieceList) or self.color == "black" and len(self.board.WhitePieceList) < len(self.board.BlackPieceList)) else -1
+			reward = 1 if (self.color == "white" and len(self.BoardObject.WhitePieceList) > len(self.BoardObject.BlackPieceList) or self.color == "black" and len(self.BoardObject.WhitePieceList) < len(self.BoardObject.BlackPieceList)) else -1
 		else: #eşitler
 			reward = 0
 		
@@ -204,9 +218,9 @@ def initializeTree(boardobject, color, timeout):
 	root.visits = 1
 
 	result = UCTSEARCH(root, timeout)
-	print("At %d level, state: %s" %(i+1, result.state.word))
+	'''print("At %d level, state: %s" %(i+1, result.state.word))
 	print("At this level, all nodes looks like the following: ")
 	for i,c in enumerate(root.children):
-		print(i,c)
+		print(i,c)'''
 	root = result
 	print("\n")
