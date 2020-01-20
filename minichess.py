@@ -452,7 +452,7 @@ class Pawn():
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
 					if theboard[self.X][targetY][1] == "R":
 						return False
-					else
+					else:
 						return True
 
 		elif slope == 10:
@@ -476,7 +476,7 @@ class Pawn():
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
 					if theboard[targetX][self.Y][1] == "R":
 						return False
-					else
+					else:
 						return True
 		else:
 			return True
@@ -619,7 +619,7 @@ class Rook():
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
 					if theboard[self.X][targetY][1] == "R":
 						return False
-					else
+					else:
 						return True
 
 		elif slope == 10:
@@ -643,7 +643,7 @@ class Rook():
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
 					if theboard[targetX][self.Y][1] == "R":
 						return False
-					else
+					else:
 						return True
 		else:
 			return True
