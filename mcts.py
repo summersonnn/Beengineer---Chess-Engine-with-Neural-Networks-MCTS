@@ -141,78 +141,78 @@ class Node():
 		return s
 		
 
-#Verilen süre içinde simülasyon ve backup yaparak node rewardlarını günceller. Süre sonunda en iyi child döner.
-def UCTSEARCH(root, timeout):
-	timeout_start = time.time()
+	#Verilen süre içinde simülasyon ve backup yaparak node rewardlarını günceller. Süre sonunda en iyi child döner.
+	def UCTSEARCH(self, root, timeout):
+		timeout_start = time.time()
 
-	while time.time() < timeout_start + timeout:
-		afterTraverse=TRAVERSAL(root)
-		#First condition was to be able to expand the ROOT node but not other visit=0 nodes, second was to enable zero-move ROLLOUT for terminal leafs
-		if (afterTraverse.visits != 0 or afterTraverse == root) and not afterTraverse.state.terminal():
-			afterTraverse = EXPAND(afterTraverse)
-	
-		reward = ROLLOUT(afterTraverse.state)
-		BACKUP(afterTraverse,reward)
-	return BESTCHILD(root,0)
+		while time.time() < timeout_start + timeout:
+			afterTraverse=self.TRAVERSAL(root)
+			#First condition was to be able to expand the ROOT node but not other visit=0 nodes, second was to enable zero-move ROLLOUT for terminal leafs
+			if (afterTraverse.visits != 0 or afterTraverse == root) and not afterTraverse.state.terminal():
+				afterTraverse = self.EXPAND(afterTraverse)
+		
+			reward = self.ROLLOUT(afterTraverse.state)
+			self.BACKUP(afterTraverse,reward)
+		return self.BESTCHILD(root,0)
 
-#Sürekli best child'ı seçerek leaf node'a ulaştırır. Buradan ilerde ya expand edilecek ya rollout yapılacak.
-def TRAVERSAL(node):
-	while len(node.children) != 0:
-		node=BESTCHILD(node,SCALAR)
-	return node
- 
-#Leaf node expand ettirir. Oluşturulacak child sayısı parametre olarak verilir.
-#customExpand = 0 means we will expand as many as numberofmoves - number of children
-def EXPAND(node, customExpand=0):
-	if customExpand == 0:
-		customExpand = node.state.numberOfMoves - len(node.children)
+	#Sürekli best child'ı seçerek leaf node'a ulaştırır. Buradan ilerde ya expand edilecek ya rollout yapılacak.
+	def TRAVERSAL(self, node):
+		while len(node.children) != 0:
+			node=self.BESTCHILD(node,SCALAR)
+		return node
+	 
+	#Leaf node expand ettirir. Oluşturulacak child sayısı parametre olarak verilir.
+	#customExpand = 0 means we will expand as many as numberofmoves - number of children
+	def EXPAND(self, node, customExpand=0):
+		if customExpand == 0:
+			customExpand = node.state.numberOfMoves - len(node.children)
 
-	for i in range(customExpand):
-		tried_children=[c.state for c in node.children]
-		new_state=node.state.next_state()
-		while new_state in tried_children:
+		for i in range(customExpand):
+			tried_children=[c.state for c in node.children]
 			new_state=node.state.next_state()
-		node.add_child(new_state)
-		tried_children += [new_state]
-	return node.children[-1]
+			while new_state in tried_children:
+				new_state=node.state.next_state()
+			node.add_child(new_state)
+			tried_children += [new_state]
+		return node.children[-1]
 
-def BESTCHILD(node,scalar):
-	bestscore=-99
-	bestchildren=[]
+	def BESTCHILD(self, node,scalar):
+		bestscore=-99
+		bestchildren=[]
 
-	for c in node.children:
-		if c.visits == 0:
-			score = 99
-		else:
-			exploit=c.reward/c.visits
-			explore=math.sqrt(math.log(node.visits)/float(c.visits))	
-			score=exploit+scalar*explore
-		if score==bestscore:
-			bestchildren.append(c)
-		if score>bestscore:
-			bestchildren=[c]
-			bestscore=score
-	if len(bestchildren)==0:
-		print("OOPS: no best child found, probably fatal")
-	return random.choice(bestchildren)
+		for c in node.children:
+			if c.visits == 0:
+				score = 99
+			else:
+				exploit=c.reward/c.visits
+				explore=math.sqrt(math.log(node.visits)/float(c.visits))	
+				score=exploit+scalar*explore
+			if score==bestscore:
+				bestchildren.append(c)
+			if score>bestscore:
+				bestchildren=[c]
+				bestscore=score
+		if len(bestchildren)==0:
+			print("OOPS: no best child found, probably fatal")
+		return random.choice(bestchildren)
 
-def ROLLOUT(state):
-	while state.terminal()==False:
-		state=state.next_state()
-	return state.reward()
+	def ROLLOUT(self, state):
+		while state.terminal()==False:
+			state=state.next_state()
+		return state.reward()
 
-def BACKUP(node,reward):
-	while node!=None:
-		node.visits+=1
-		node.reward+=reward
-		node=node.parent
-	return
+	def BACKUP(self, node, reward):
+		while node!=None:
+			node.visits+=1
+			node.reward+=reward
+			node=node.parent
+		return
 
 def initializeTree(boardobject, color, timeout):
 	root = Node(State(boardobject, color))
 	root.state.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
 
-	result = UCTSEARCH(root, timeout)
+	result = root.UCTSEARCH(root, timeout)
 	'''print("At %d level, state: %s" %(i+1, result.state.word))
 	print("At this level, all nodes looks like the following: ")
 	for i,c in enumerate(root.children):
