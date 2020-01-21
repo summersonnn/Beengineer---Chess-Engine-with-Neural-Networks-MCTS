@@ -147,7 +147,8 @@ def UCTSEARCH(root, timeout):
 
 	while time.time() < timeout_start + timeout:
 		afterTraverse=TRAVERSAL(root)
-		if (afterTraverse.visits != 0 and not afterTraverse.state.terminal()):
+		#First condition was to be able to expand the ROOT node but not other visit=0 nodes, second was to enable zero-move ROLLOUT for terminal leafs
+		if (afterTraverse.visits != 0 or afterTraverse == root) and not afterTraverse.state.terminal():
 			afterTraverse = EXPAND(afterTraverse)
 	
 		reward = ROLLOUT(afterTraverse.state)
@@ -210,7 +211,6 @@ def BACKUP(node,reward):
 def initializeTree(boardobject, color, timeout):
 	root = Node(State(boardobject, color))
 	root.state.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
-	root.visits = 1
 
 	result = UCTSEARCH(root, timeout)
 	'''print("At %d level, state: %s" %(i+1, result.state.word))
