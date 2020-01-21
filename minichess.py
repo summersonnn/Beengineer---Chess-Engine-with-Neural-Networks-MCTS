@@ -210,9 +210,7 @@ class MiniChess():
 		return reward, terminal'''
 
 	def removeCapturedPiece(self, BitonBoard, incomingList):
-		print("-------Inside Removal--------")
 		for index,i in enumerate(incomingList,0):
-			print("My Bit: " + str(i.BitonBoard))
 			if i.BitonBoard == BitonBoard:
 				indexToBeDeleted = index
 				break
@@ -430,7 +428,6 @@ class Pawn():
 
 	#When switched to full board, check the cases where slope is 1 or -1. There is no need to check for them since there are no bishop or queens to threat the king.
 	def IsOkayForKingSafety(self, theboard, FriendlyKing, candidateX, candidateY):
-		print("FriendlyKing: " + str(FriendlyKing))
 		DistanceVertical = self.X - FriendlyKing.X
 		DistanceHorizontal = self.Y - FriendlyKing.Y
 		isXGreaterThanKing = 1 if DistanceVertical > 0 else -1

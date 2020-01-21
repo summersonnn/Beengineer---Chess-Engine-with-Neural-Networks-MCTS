@@ -20,7 +20,7 @@ In particular there are two models of best child that one can use
 
 #MCTS scalar.  Larger scalar will increase exploitation, smaller will increase exploration. 
 SCALAR=2
-EXPAND_NUMBER = 2
+EXPAND_NUMBER = 3
 
 
 class State():
@@ -40,19 +40,13 @@ class State():
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
 	def next_state(self):
-		print("--------------next_state function-------------")
-		self.BoardObject.print()
+		print(self.numberOfMoves)
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
 		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves - 1)] #e.g 145
 
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[nextActionNumber]
-		for i in self.availableActions:
-			print("Available actions: " + inv_actions[i])
-
-		print("\n")
-		#print("Current_action:" + current_action)
 		del inv_actions
 		
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
@@ -69,13 +63,9 @@ class State():
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
 
 		if capturedPieceNotation != "XX":
-			#print("Before going removal function")
-			#print(otherList)
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, otherList)
-			#print("Afte coming from removal function")
-			#print(otherList)
 			
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
@@ -101,17 +91,19 @@ class State():
 		next.build_exclusive_string()	#New exclusive string is constructed, ready for being hashed
 		next.moveCount += 1	#In the new node, movecount will be one more
 		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
-		
+		next.numberOfMoves = 0
+
 		if next.terminal() == False:
 			next.availableActions = next.BoardObject.calculate_available_actions(next.color)	#Calc new available actions for the board object and pass it to State object member
 			next.numberOfMoves = len(next.availableActions)
+
 		return next
 	def terminal(self):
 		#Minichess için buradaki kontrol "action space 0'a düşmüşse (matsa)" olacak
 		ListToUse = self.BoardObject.WhitePieceList if self.color == "white" else self.BoardObject.BlackPieceList
 
 		#Last condition was for checking if the King is captured or not. But in full mode, King can't be captured, change this.
-		if self.moveCount > 30 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0 or ListToUse[0].notation[1] != "K":
+		if self.moveCount > 10 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0 or self.numberOfMoves == 0 or ListToUse[0].notation[1] != "K":
 			return True
 		return False
 	def reward(self):
@@ -157,7 +149,7 @@ def UCTSEARCH(root, timeout):
 	while time.time() < timeout_start + timeout:
 		afterTraverse=TRAVERSAL(root)
 		if (afterTraverse.visits != 0):
-			afterTraverse = EXPAND(afterTraverse, EXPAND_NUMBER)
+			afterTraverse = EXPAND(afterTraverse)
 	
 		reward = ROLLOUT(afterTraverse.state)
 		BACKUP(afterTraverse,reward)
@@ -170,8 +162,12 @@ def TRAVERSAL(node):
 	return node
  
 #Leaf node expand ettirir. Oluşturulacak child sayısı parametre olarak verilir.
-def EXPAND(node, expandNumber):
-	for i in range(expandNumber):
+#customExpand = 0 means we will expand as many as numberofmoves - number of children
+def EXPAND(node, customExpand=0):
+	if customExpand == 0:
+		customExpand = node.state.numberOfMoves - len(node.children)
+
+	for i in range(customExpand):
 		tried_children=[c.state for c in node.children]
 		new_state=node.state.next_state()
 		while new_state in tried_children:
@@ -181,16 +177,19 @@ def EXPAND(node, expandNumber):
 	return node.children[-1]
 
 def BESTCHILD(node,scalar):
-	bestscore=-10000
+	bestscore=-99
 	bestchildren=[]
 
 	for c in node.children:
 		if c.visits == 0:
-			score = 9999999
+			score = 99
 		else:
 			exploit=c.reward/c.visits
 			explore=math.sqrt(math.log(node.visits)/float(c.visits))	
 			score=exploit+scalar*explore
+			#If the best child is terminal, do not select it since we can't expand it later. WARNING: THIS MAY HAVE SIDE EFFECTS IN FUTURE!
+			if c.state.terminal():
+				score = -100
 		if score==bestscore:
 			bestchildren.append(c)
 		if score>bestscore:
@@ -224,3 +223,4 @@ def initializeTree(boardobject, color, timeout):
 		print(i,c)'''
 	root = result
 	print("\n")
+	print(root.state.BoardObject.print())
