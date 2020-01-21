@@ -35,7 +35,8 @@ def train(policy_net, target_net):
 		for step in range(max_steps_per_episode):
 			#print("Humanistic state: " + str(em.get_humanistic_state()))
 			print("-----------Training Starts-----------")
-			available_actions = em.calculate_available_actions("white")	#Deciding the possible actions. Illegal actions are not taken into account
+			checkedby = em.IsCheck("white")
+			available_actions = em.calculate_available_actions("white", False, checkedby)	#Deciding the possible actions. Illegal actions are not taken into account
 			mcts.initializeTree(em, "white", 1)
 			raise ValueError('-----END OF MCTS-----')
 			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format

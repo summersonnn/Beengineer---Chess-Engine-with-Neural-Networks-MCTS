@@ -217,7 +217,9 @@ class MiniChess():
 		del incomingList[indexToBeDeleted]
 
 	#Color is the color the player who may be in check (whom turn to move)
+	#Returns the number of checks from pieces. 0 = No check  e.g 2 = Checked by 2 pieces at the same time
 	def IsCheck(self, color):
+		checkedBy = 0
 		OurKingX = self.WhitePieceList[0].x if color == "white" else self.BlackPieceList[0].x
 		OurKingY = self.WhitePieceList[0].y if color == "white" else self.BlackPieceList[0].y
 
@@ -227,10 +229,10 @@ class MiniChess():
 		#Check for enemy pawns. If we're at the last enemy rank, no enemy pawn can give a check
 		if color == "black" and OurKingX != 5:
 			if 	OurKingY > 0 and self.board[OurKingX + 1][OurKingY - 1] == "+P" or OurKingY < 2 and self.board[OurKingX + 1][OurKingY + 1] == "+P":
-				return True
+				checkedBy += 1
 		if color == "white" and OurKingX != 0:
 			if 	OurKingY > 0 and self.board[OurKingX - 1][OurKingY - 1] == "+P" or OurKingY < 2 and self.board[OurKingX - 1][OurKingY + 1] == "+P":
-				return True
+				checkedBy += 1
 
 		#Check for king rank and king file for enemy rook
 		possibleEnemyRookThreatedBits = []
@@ -239,11 +241,12 @@ class MiniChess():
 				if i.X == OurKingX or i.Y == OurKingY:
 					possibleEnemyRookThreatedBits += i.possibleActions(self.board, enemyList[0], True, True)
 
+		#After obtaining threated bits by enemy kings, we check if our king is in one of them.
 		for bit in possibleEnemyRookThreatedBits:
 			if friendlyList[0].BitonBoard == bit:
-				return True
+				checkedBy += 1
 
-		return False
+		return checkedBy
 
 	#Tehdit edilen kareler hesaplanıyor, bitvector listesi olarak.
 	def calculateThreatedSquares(self, color):
@@ -259,8 +262,9 @@ class MiniChess():
 				print(self.board[i][j], end=" ")
 			print(" ")
 
-	#If last element is True, this function calculates vectorbits of threated squares, if False, available actions.
-	def calculate_available_actions(self, forColor, IsForCalculatingThreats=False):
+	#If IsForCalculatingThreats is True, this function calculates vectorbits of threated squares, if False, available actions.
+	#Checkby is given if we're in check, and it is the number of checks at the same time. If it is not explicitly given, which means we're not in check, it comes as 100
+	def calculate_available_actions(self, forColor, IsForCalculatingThreats=False, checkedBy=100):
 		available_actions = []
 		ThreatedSquares = []
 		if not IsForCalculatingThreats:
@@ -268,13 +272,17 @@ class MiniChess():
 		
 		if forColor == "white":
 			available_actions += self.WhitePieceList[0].possibleActions(self.board, ThreatedSquares)
-			for i in self.WhitePieceList[1:]:
-				available_actions += i.possibleActions(self.board, self.WhitePieceList[0])
+			#If we're in check from multiple enemy pieces, we have to move the king so we don't have to calculate av.act. of other pieces
+			if checkedBy > 1:
+				for i in self.WhitePieceList[1:]:
+					available_actions += i.possibleActions(self.board, self.WhitePieceList[0])
 
 		elif forColor == "black":
 			available_actions += self.BlackPieceList[0].possibleActions(self.board, ThreatedSquares)
-			for i in self.BlackPieceList[1:]:
-				available_actions += i.possibleActions(self.board, self.BlackPieceList[0])
+			#If we're in check from multiple enemy pieces, we have to move the king so we don't have to calculate av.act. of other pieces
+			if checkedBy > 1:
+				for i in self.BlackPieceList[1:]:
+					available_actions += i.possibleActions(self.board, self.BlackPieceList[0])
 
 		if not IsForCalculatingThreats:
 			self.available_actions += available_actions
