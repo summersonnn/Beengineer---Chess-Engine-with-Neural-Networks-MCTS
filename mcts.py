@@ -40,7 +40,6 @@ class State():
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
 	def next_state(self):
-		print(self.numberOfMoves)
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
 		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves - 1)] #e.g 145
@@ -148,7 +147,7 @@ def UCTSEARCH(root, timeout):
 
 	while time.time() < timeout_start + timeout:
 		afterTraverse=TRAVERSAL(root)
-		if (afterTraverse.visits != 0):
+		if (afterTraverse.visits != 0 and not afterTraverse.state.terminal()):
 			afterTraverse = EXPAND(afterTraverse)
 	
 		reward = ROLLOUT(afterTraverse.state)
@@ -187,9 +186,6 @@ def BESTCHILD(node,scalar):
 			exploit=c.reward/c.visits
 			explore=math.sqrt(math.log(node.visits)/float(c.visits))	
 			score=exploit+scalar*explore
-			#If the best child is terminal, do not select it since we can't expand it later. WARNING: THIS MAY HAVE SIDE EFFECTS IN FUTURE!
-			if c.state.terminal():
-				score = -100
 		if score==bestscore:
 			bestchildren.append(c)
 		if score>bestscore:
@@ -223,4 +219,4 @@ def initializeTree(boardobject, color, timeout):
 		print(i,c)'''
 	root = result
 	print("\n")
-	print(root.state.BoardObject.print())
+	root.state.BoardObject.print()
