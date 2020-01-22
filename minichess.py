@@ -580,6 +580,10 @@ class Rook():
 					threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K"))
 					rightFlag = False
 
+					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
+					if IsForCheck and self.Y + i + 1 < 3:
+						threated_bits.append(coorToBitVector(self.X, self.Y + i + 1, "+K" if self.color == "black" else "-K"))
+
 				else:
 					threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K"))
 					rightFlag = False
@@ -595,6 +599,10 @@ class Rook():
 					available_actions.append(ad.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X, self.Y - i, "+K" if self.color == "black" else "-K"))
 					leftFlag = False
+
+					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
+					if IsForCheck and self.Y - i - 1 >=0:
+						threated_bits.append(coorToBitVector(self.X, self.Y - i - 1, "+K" if self.color == "black" else "-K"))
 
 				else:
 					threated_bits.append(coorToBitVector(self.X, self.Y - i, "+K" if self.color == "black" else "-K"))
@@ -617,6 +625,10 @@ class Rook():
 					threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
 					downFlag = False
 
+					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
+					if IsForCheck and self.X + i + 1 < 6:
+						threated_bits.append(coorToBitVector(self.X + i + 1, self.Y, "+K" if self.color == "black" else "-K"))
+
 				else:
 					threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
 					downFlag = False
@@ -632,6 +644,10 @@ class Rook():
 					available_actions.append(ad.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X - i, self.Y, "+K" if self.color == "black" else "-K"))
 					upFlag = False
+
+					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
+					if IsForCheck and self.X - i - 1 >=0:
+						threated_bits.append(coorToBitVector(self.X - i - 1, self.Y, "+K" if self.color == "black" else "-K"))
 
 				else:
 					threated_bits.append(coorToBitVector(self.X - i, self.Y, "+K" if self.color == "black" else "-K"))
