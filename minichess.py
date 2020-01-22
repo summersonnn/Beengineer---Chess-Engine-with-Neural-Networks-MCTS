@@ -221,8 +221,8 @@ class MiniChess():
 	#Returns the number of checks from pieces. 0 = No check  e.g 2 = Checked by 2 pieces at the same time
 	def IsCheck(self, color):
 		checkedBy = 0
-		OurKingX = self.WhitePieceList[0].x if color == "white" else self.BlackPieceList[0].x
-		OurKingY = self.WhitePieceList[0].y if color == "white" else self.BlackPieceList[0].y
+		OurKingX = self.WhitePieceList[0].X if color == "white" else self.BlackPieceList[0].X
+		OurKingY = self.WhitePieceList[0].Y if color == "white" else self.BlackPieceList[0].Y
 
 		friendlyList = self.WhitePieceList if color == "white" else self.BlackPieceList
 		enemyList = self.WhitePieceList if color == "black" else self.BlackPieceList

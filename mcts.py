@@ -120,7 +120,6 @@ class State():
 	def __hash__(self):
 		return int(hashlib.md5(self.exclusive_board_string.encode('utf-8')).hexdigest(),16)
 	def __eq__(self,other):
-		print(self.color + "\t" + other.color)
 		if hash(self)==hash(other):
 			return True
 		return False
