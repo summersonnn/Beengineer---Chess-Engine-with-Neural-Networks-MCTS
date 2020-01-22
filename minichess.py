@@ -155,51 +155,78 @@ class MiniChess():
 		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
 		self.available_actions = []
 		return None
-	'''
-	def step(self, action):
-		print("----------------Start of STEP------------------")
-		inv_actions = {v: k for k, v in ad.actions.items()}
+
+	def step(self, enemyMove):
+
+		first = 6 - int(enemyMove[1])
+		third = 6 - int(enemyMove[3])
+
+		if enemyMove[0] == "a":
+			second = 0
+		elif enemyMove[0] == "b":
+			second = 1  
+		elif enemyMove[0] == "c":
+			second = 2  
+		else:
+			raise ValueError('-----WRONG INPUT-----')
+		if enemyMove[2] == "a":
+			fourth = 0
+		elif enemyMove[2] == "b":
+			fourth = 1  
+		elif enemyMove[2] == "c":
+			fourth = 2 
+		else:
+			raise ValueError('-----WRONG INPUT-----')
+		'''inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[action]
 		del inv_actions
 		#We got the action string e.g "0201K"
-		#Now we will edit the board and pass the resulting board to MCSearchTree so that it can return us a reward
+		#Now we will edit the board and pass the resulting board to MCSearchTree so that it can return us a reward'''
 
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
-		pieceNotationBeforeMove = self.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
-		oldcoorBit = coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
-		self.board[int(current_action[0])][int(current_action[1])] = "XX"
+		pieceNotationBeforeMove = self.board[first][second]	#e.g "+P"
+		oldcoorBit = coorToBitVector(first, second, pieceNotationBeforeMove) #e.g 30
+		self.board[first][second] = "XX"
 		self.bitVectorBoard[oldcoorBit] = 0
 
-		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
+
+		pieceNotationAfterMove = pieceNotationBeforeMove
+		promoted = False
+		if pieceNotationBeforeMove == "+P" and third == 0:
+			pieceNotationAfterMove = "+R"
+			promoted = True
+		elif pieceNotationBeforeMove == "-P" and third == 5:
+			pieceNotationAfterMove = "-R"
+			promoted = True
+
 		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
-		promoted = True if len(current_action) == 6 else False
 		ListToUse = self.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BlackPieceList
 		otherList = self.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BlackPieceList
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
-		capturedPieceNotation = self.board[int(current_action[2])][int(current_action[3])]
+		capturedPieceNotation = self.board[third][fourth]
 		if capturedPieceNotation != "XX":
-			capturedPieceBit = coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
+			capturedPieceBit = coorToBitVector(third, fourth, capturedPieceNotation)
 			self.bitVectorBoard[capturedPieceBit] = 0
 			self.removeCapturedPiece(capturedPieceBit, otherList)
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
-		self.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
-		newcoorBit = coorToBitVector(int(current_action[2]), int(current_action[3]), pieceNotationAfterMove)
+		self.board[third][fourth] = pieceNotationAfterMove
+		newcoorBit = coorToBitVector(third, fourth, pieceNotationAfterMove)
 		self.bitVectorBoard[newcoorBit] = 1
 
 		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
 		if not promoted:
 			for i in ListToUse:
 				if i.BitonBoard == oldcoorBit:
-					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
+					i.step(newcoorBit, third, fourth) 
 		#if promoted, create a new object and kill the pawn object
 		else:
-			ListToUse += Rook(color, int(current_action[2]), int(current_action[3]), self)	#Warning! Possible costly operation. Test it.
+			ListToUse += Rook(color, third, fourth, self)	#Warning! Possible costly operation. Test it.
 			#Not captured, but since promoted, pawn object must be deleted
 			self.removeCapturedPiece(oldcoorBit, ListToUse)
 
-		reward = 0
+		'''reward = 0
 		terminal = False
 
 		print("----------Just before into MCTS--------------")
@@ -209,6 +236,7 @@ class MiniChess():
 		#Bu durumda reward ve terminal hiçbir şey ifade etmeyeceği için, değiştirmiyoruz, 0 kalsınlar.
 
 		return reward, terminal'''
+		return self
 
 	def removeCapturedPiece(self, BitonBoard, incomingList):
 		for index,i in enumerate(incomingList,0):

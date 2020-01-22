@@ -22,23 +22,42 @@ target_update = 5	#how often does target network get updated? (in terms of episo
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
 num_episodes = 1
-max_steps_per_episode = 1
+max_steps_per_episode = 10
 
 def train(policy_net, target_net):
 	global loss
+	global em
 	steps_per_episode = []	#counts how many steps played in each episode
 	for episode in range(past_episodes, num_episodes + past_episodes):
 		print("Episode number: " + str(episode))
-		em.reset()	#reset the environment to start all over again
-		state = em.get_state()	#get the first state from the environment as a tensor 
+		#em.reset()	#reset the environment to start all over again
+		#state = em.get_state()	#get the first state from the environment as a tensor 
 
 		for step in range(max_steps_per_episode):
 			#print("Humanistic state: " + str(em.get_humanistic_state()))
 			print("-----------Training Starts-----------")
 			checkedby, checkThreats = em.IsCheck("white")
+			em.available_actions.clear()
 			available_actions = em.calculate_available_actions("white", False, checkedby, checkThreats)	#Deciding the possible actions. Illegal actions are not taken into account
-			mcts.initializeTree(em, "white", 1)
-			raise ValueError('-----END OF MCTS-----')
+			if len(available_actions) == 0:
+				print("Black wins!\n")
+				exit(0)
+
+			em = mcts.initializeTree(em, "white", 5)
+			em.print()
+
+			checkedby, checkThreats = em.IsCheck("white")
+			if len(em.calculate_available_actions("black", False, checkedby, checkThreats)) == 0:
+				print("White wins!\n")
+				exit(0)
+
+			enemyMove = ""
+			while len(enemyMove) != 4:
+				enemyMove = input("What's your move? Type it in that format: a1a2 which means move the piece in a1 to a2 (or capture)")
+			em = em.step(enemyMove)
+
+
+			'''raise ValueError('-----END OF MCTS-----')
 			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
 			next_state = em.get_state()	#get the new state
@@ -82,11 +101,11 @@ def train(policy_net, target_net):
 				steps_per_episode.append(step)
 				#print("Terminal! : " + str(step))
 				#print(state)
-				break
+				break '''
 
 		#Update target network with weights and biases in the policy network
 		#Also create new model files
-		if( episode % target_update == 0 ):
+		'''if( episode % target_update == 0 ):
 			target_net.load_state_dict(policy_net.state_dict())
 			torch.save({ 'episode': episode,
 	            		'model_state_dict': policy_net.state_dict(),
@@ -99,7 +118,7 @@ def train(policy_net, target_net):
 		steps_per_episode.append(step)
 		print("Exploration rate: " + str(agent.tell_me_exploration_rate()))
 		print("Steps per episode: " + str(steps_per_episode[-10:])+ '\n')
-		print("Average steps: " + str(sum(steps_per_episode) / len(steps_per_episode)))
+		print("Average steps: " + str(sum(steps_per_episode) / len(steps_per_episode)))'''
 	return None
 
 def test(policy_net):

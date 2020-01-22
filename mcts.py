@@ -102,7 +102,7 @@ class State():
 		ListToUse = self.BoardObject.WhitePieceList if self.color == "white" else self.BoardObject.BlackPieceList
 
 		#Last condition was for checking if the King is captured or not. But in full mode, King can't be captured, change this.
-		if self.moveCount > 10 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0 or self.numberOfMoves == 0 or ListToUse[0].notation[1] != "K":
+		if self.moveCount > 30 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0 or self.numberOfMoves == 0 or ListToUse[0].notation[1] != "K":
 			return True
 		return False
 	def reward(self):
@@ -170,7 +170,7 @@ class Node():
 		for i in range(customExpand):
 			tried_children=[c.state for c in node.children]
 			new_state=node.state.next_state()
-			while new_state in tried_children:
+			while new_state in tried_children and node.state.numberOfMoves > len(tried_children):
 				new_state=node.state.next_state()
 			node.add_child(new_state)
 			tried_children += [new_state]
@@ -218,5 +218,4 @@ def initializeTree(boardobject, color, timeout):
 	for i,c in enumerate(root.children):
 		print(i,c)'''
 	root = result
-	print("\n")
-	root.state.BoardObject.print()
+	return root.state.BoardObject
