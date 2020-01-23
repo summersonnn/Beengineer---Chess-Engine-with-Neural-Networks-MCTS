@@ -37,16 +37,25 @@ def train(policy_net, target_net):
 			#print("Humanistic state: " + str(em.get_humanistic_state()))
 			print("-----------Training Starts-----------")
 			checkedby, checkThreats = em.IsCheck("white")
+			print("IsCheck:" + str(checkedby))
+			print("IsCheck:" + str(checkThreats))
+			print("C - Bunu gördü")
 			em.available_actions.clear()
+			print("D - Bunu gördü")
 			available_actions = em.calculate_available_actions("white", False, checkedby, checkThreats)	#Deciding the possible actions. Illegal actions are not taken into account
+			print("E - Bunu gördü")
 			if len(available_actions) == 0:
 				print("Black wins!\n")
 				exit(0)
 
-			em = mcts.initializeTree(em, "white", 5)
+			print("F - Bunu gördü")
+			em = mcts.initializeTree(em, "white", 1)
+			print("G - Bunu gördü")
 			em.print()
 
-			checkedby, checkThreats = em.IsCheck("white")
+			checkedby, checkThreats = em.IsCheck("black")
+			em.available_actions.clear()
+			print("H - Bunu gördü")
 			if len(em.calculate_available_actions("black", False, checkedby, checkThreats)) == 0:
 				print("White wins!\n")
 				exit(0)
@@ -54,7 +63,9 @@ def train(policy_net, target_net):
 			enemyMove = ""
 			while len(enemyMove) != 4:
 				enemyMove = input("What's your move? Type it in that format: a1a2 which means move the piece in a1 to a2 (or capture)")
+			print("A - Bunu gördü")
 			em = em.step(enemyMove)
+			print("B - Bunu gördü")
 
 
 			'''raise ValueError('-----END OF MCTS-----')
