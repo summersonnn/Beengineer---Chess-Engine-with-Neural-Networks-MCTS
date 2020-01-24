@@ -601,7 +601,7 @@ class Rook():
 	#EnemyKing coordinates are given if IsForCheck = True
 	#checkThreats is the threats from enemy piece that provide checks, we will look at these bits to destroy the check
 	#checkThreats is NOT false whenever we're calculating legal moves to get rid of the check
-	def possibleActions(self, theboard, FriendlyKing, IsForCalculatingThreats=False, IsForCheck=False, EnemyKingX=None, EnemyKingY=None, checkThreats=False):
+	def possibleActions(self, theboard, FriendlyKing, IsForCalculatingThreats=False, IsForCheck=False, EnemyKingX=None, EnemyKingY=None, checkThreats=None):
 	#theboard is the board member in the MiniChess object
 		available_actions = []
 		threated_bits = [] #For the enemy king
@@ -611,7 +611,7 @@ class Rook():
 		leftFlag = True
 		for i in range (1,3):
 			#Right - About the condition with abs: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if rightFlag and self.Y + i < 3 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X, self.Y+i)) and (not IsForCheck or (abs(self.Y - EnemyKingY) > abs(self.Y + i - EnemyKingY))) and (not checkThreats or coorToBitVector(self.X, self.Y + i, "-K" if self.color == "black" else "+K") not in checkThreats):
+			if rightFlag and self.Y + i < 3 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X, self.Y+i)) and (not IsForCheck or (abs(self.Y - EnemyKingY) > abs(self.Y + i - EnemyKingY))) and (checkThreats == None or coorToBitVector(self.X, self.Y + i, "-K" if self.color == "black" else "+K") not in checkThreats):
 				if theboard[self.X][self.Y + i] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
@@ -632,7 +632,7 @@ class Rook():
 					if not IsForCheck: threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K")) 
 					rightFlag = False
 			#Left - About the condition with abs: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if leftFlag and self.Y - i >= 0 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X, self.Y-i)) and (not IsForCheck or (abs(self.Y - EnemyKingY) > abs(self.Y - i - EnemyKingY))) and (not checkThreats or coorToBitVector(self.X, self.Y - i, "-K" if self.color == "black" else "+K") not in checkThreats):
+			if leftFlag and self.Y - i >= 0 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X, self.Y-i)) and (not IsForCheck or (abs(self.Y - EnemyKingY) > abs(self.Y - i - EnemyKingY))) and (checkThreats == None or coorToBitVector(self.X, self.Y - i, "-K" if self.color == "black" else "+K") not in checkThreats):
 				if theboard[self.X][self.Y - i] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
@@ -658,7 +658,7 @@ class Rook():
 		downFlag = True
 		for i in range (1,6):
 			#Down - About the last condition: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if downFlag and self.X + i < 6 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X+i, self.Y)) and (not IsForCheck or (abs(self.X - EnemyKingX) > abs(self.X + i - EnemyKingX))) and (not checkThreats or coorToBitVector(self.X+i, self.Y, "-K" if self.color == "black" else "+K") not in checkThreats):
+			if downFlag and self.X + i < 6 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X+i, self.Y)) and (not IsForCheck or (abs(self.X - EnemyKingX) > abs(self.X + i - EnemyKingX))) and (checkThreats == None or coorToBitVector(self.X+i, self.Y, "-K" if self.color == "black" else "+K") not in checkThreats):
 				if theboard[self.X + i][self.Y] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X + i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
@@ -679,7 +679,7 @@ class Rook():
 					if not IsForCheck: threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
 					downFlag = False
 			#Up - About the last condition: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if upFlag and self.X - i >= 0 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X-i, self.Y)) and (not IsForCheck or (abs(self.X - EnemyKingX) > abs(self.X - i - EnemyKingX))) and (not checkThreats or coorToBitVector(self.X-i, self.Y, "-K" if self.color == "black" else "+K") not in checkThreats):
+			if upFlag and self.X - i >= 0 and (IsForCheck or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X-i, self.Y)) and (not IsForCheck or (abs(self.X - EnemyKingX) > abs(self.X - i - EnemyKingX))) and (checkThreats == None or coorToBitVector(self.X-i, self.Y, "-K" if self.color == "black" else "+K") not in checkThreats):
 				if theboard[self.X - i][self.Y] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X - i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
