@@ -22,7 +22,7 @@ target_update = 5	#how often does target network get updated? (in terms of episo
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
 num_episodes = 1
-max_steps_per_episode = 10
+max_steps_per_episode = 30
 
 def train(policy_net, target_net):
 	global loss
@@ -39,23 +39,17 @@ def train(policy_net, target_net):
 			checkedby, checkThreats = em.IsCheck("white")
 			print("IsCheck:" + str(checkedby))
 			print("IsCheck:" + str(checkThreats))
-			print("C - Bunu gördü")
 			em.available_actions.clear()
-			print("D - Bunu gördü")
 			available_actions = em.calculate_available_actions("white", False, checkedby, checkThreats)	#Deciding the possible actions. Illegal actions are not taken into account
-			print("E - Bunu gördü")
 			if len(available_actions) == 0:
 				print("Black wins!\n")
 				exit(0)
 
-			print("F - Bunu gördü")
 			em = mcts.initializeTree(em, "white", 1)
-			print("G - Bunu gördü")
 			em.print()
 
 			checkedby, checkThreats = em.IsCheck("black")
 			em.available_actions.clear()
-			print("H - Bunu gördü")
 			if len(em.calculate_available_actions("black", False, checkedby, checkThreats)) == 0:
 				print("White wins!\n")
 				exit(0)
@@ -63,9 +57,7 @@ def train(policy_net, target_net):
 			enemyMove = ""
 			while len(enemyMove) != 4:
 				enemyMove = input("What's your move? Type it in that format: a1a2 which means move the piece in a1 to a2 (or capture)")
-			print("A - Bunu gördü")
 			em = em.step(enemyMove)
-			print("B - Bunu gördü")
 
 
 			'''raise ValueError('-----END OF MCTS-----')
