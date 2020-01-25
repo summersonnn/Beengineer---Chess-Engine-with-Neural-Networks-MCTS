@@ -279,6 +279,7 @@ class MiniChess():
 				if i.X == OurKingX or i.Y == OurKingY and i.DoesItThreatSquare(self.board, friendlyList[0].X, friendlyList[0].Y):
 					direct, behindKingBit = i.possibleActions(self.board, enemyList[0], True, True, OurKingX, OurKingY)
 					DirectThreatedBits += direct
+					DirectThreatedBits.append(coorToBitVector(i.X, i.Y, "+K" if color == "white" else "-K"))
 
 		#After obtaining threated bits by enemy pieces, we check if our king is in one of them.
 		for bit in DirectThreatedBits:
