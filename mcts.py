@@ -40,6 +40,9 @@ class State():
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
 	def next_state(self):
+		if self.numberOfMoves == 0 or self.moveCount > 30:
+			raise ValueError('-----Terminalden üretti!!!-----')
+
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
 		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves - 1)] #e.g 145
@@ -60,8 +63,15 @@ class State():
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
+		self.BoardObject.print()
 
 		if capturedPieceNotation != "XX":
+			if capturedPieceNotation[1] == "K":
+				print("\n\n")
+				print("Sıra:" + self.color)
+				print("Yiyen taşın koordinatı: " + current_action[0]+current_action[1])
+				print("Yenilen taşın: " + current_action[2]+current_action[3])
+				raise ValueError('-----SAH YENILDI!!!-----')
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, otherList)
@@ -92,28 +102,29 @@ class State():
 		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
 		next.numberOfMoves = 0
 
-		if next.terminal() == False:
-			next.availableActions = next.BoardObject.calculate_available_actions(next.color)	#Calc new available actions for the board object and pass it to State object member
-			next.numberOfMoves = len(next.availableActions)
+		checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
+		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, checkedby, checkDirectThreats, checkAllThreats)
+		next.numberOfMoves = len(next.availableActions)
+		print("\n\n")
+		print(next.availableActions)
+		print("\n")
+
 
 		return next
 	def terminal(self):
-		#Minichess için buradaki kontrol "action space 0'a düşmüşse (matsa)" olacak
-		ListToUse = self.BoardObject.WhitePieceList if self.color == "white" else self.BoardObject.BlackPieceList
-
-		#Last condition was for checking if the King is captured or not. But in full mode, King can't be captured, change this.
-		if self.moveCount > 30 or len(self.BoardObject.WhitePieceList) == 0 or len(self.BoardObject.BlackPieceList) == 0 or self.numberOfMoves == 0 or ListToUse[0].notation[1] != "K":
+		if self.moveCount > 30 or self.numberOfMoves == 0:
 			return True
 		return False
 	def reward(self):
-		if len(self.BoardObject.WhitePieceList) == 0:
+		if self.numberOfMoves == 0:
 			reward = 1 if self.color == "black" else -1
-		elif len(self.BoardObject.BlackPieceList) == 0:
-			reward = 1 if self.color == "white" else -1
 		elif self.moveCount > 30:
-			reward = 1 if (self.color == "white" and len(self.BoardObject.WhitePieceList) > len(self.BoardObject.BlackPieceList) or self.color == "black" and len(self.BoardObject.WhitePieceList) < len(self.BoardObject.BlackPieceList)) else -1
-		else: #eşitler
-			reward = 0
+			if len(self.BoardObject.WhitePieceList) > len(self.BoardObject.BlackPieceList):
+				reward = 1
+			elif len(self.BoardObject.WhitePieceList) < len(self.BoardObject.BlackPieceList):
+				reward = -1
+			else:
+				reward = 0
 		
 		return reward
 
