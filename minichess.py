@@ -394,10 +394,10 @@ class King():
 			if theboard[self.X][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X][self.Y + 1][0] != "-" and self.color == "black":
 				action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 1) not in ThreatedSquares else None
-				#Sag-ust
-				if self.X > 0 and (theboard[self.X - 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y + 1][0] != "-" and self.color == "black"):
-					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 2) not in ThreatedSquares else None
+			#Sag-ust
+			if self.X > 0 and (theboard[self.X - 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y + 1][0] != "-" and self.color == "black"):
+				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 2) not in ThreatedSquares else None
 		#Alt Kontrol
 		if 	self.X < 5:
 			bottom = True
@@ -405,10 +405,10 @@ class King():
 			if theboard[self.X + 1][self.Y][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y][0] != "-" and self.color == "black":
 				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 3) not in ThreatedSquares else None
-				#Sag-alt
-				if self.Y < 2 and (theboard[self.X + 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y + 1][0] != "-" and self.color == "black"):	
-					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 4) not in ThreatedSquares else None
+			#Sag-alt
+			if self.Y < 2 and (theboard[self.X + 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y + 1][0] != "-" and self.color == "black"):	
+				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 4) not in ThreatedSquares else None
 		#Sol Kontrol
 		if 	self.Y > 0:
 			left = True
@@ -416,14 +416,14 @@ class King():
 			if theboard[self.X][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X][self.Y - 1][0] != "-" and self.color == "black":
 				action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - 1) + str(self.notation[1])
 				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 1) not in ThreatedSquares else None
-				#Sol-üst
-				if self.X > 0 and (theboard[self.X - 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y - 1][0] != "-" and self.color == "black"):		
-					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 4) not in ThreatedSquares else None
-				#Sol-alt
-				if self.X < 5 and (theboard[self.X + 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y - 1][0] != "-" and self.color == "black"):		
-					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 2) not in ThreatedSquares else None
+			#Sol-üst	
+			if self.X > 0 and (theboard[self.X - 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y - 1][0] != "-" and self.color == "black"):		
+				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 4) not in ThreatedSquares else None
+			#Sol-alt
+			if self.X < 5 and (theboard[self.X + 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y - 1][0] != "-" and self.color == "black"):		
+				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + str(self.notation[1])
+				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 2) not in ThreatedSquares else None
 
 		if top and right:
 			threated_bits.append( coorToBitVector(self.X - 1, self.Y + 1, "+K" if self.color == "black" else "-K") ) if (self.BitonBoard - 2) not in ThreatedSquares else None
@@ -545,7 +545,7 @@ class Pawn():
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, self.X, self.Y, candidateX, candidateY):
+					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
 						return False
 					else:
 						return True
@@ -572,7 +572,7 @@ class Pawn():
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[targetX][self.Y][1] == "R" and not isInBetween(targetX, self.Y, self.X, self.Y, candidateX, candidateY):
+					if theboard[targetX][self.Y][1] == "R" and not isInBetween(targetX, self.Y, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
 						return False
 					else:
 						return True
@@ -801,7 +801,7 @@ class Rook():
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, self.X, self.Y, candidateX, candidateY):
+					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
 						return False
 					else:
 						return True
@@ -828,7 +828,7 @@ class Rook():
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[targetX][self.Y][1] == "R" and not isInBetween(targetX, self.Y, self.X, self.Y, candidateX, candidateY):
+					if theboard[targetX][self.Y][1] == "R" and not isInBetween(targetX, self.Y, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
 						return False
 					else:
 						return True
@@ -861,11 +861,13 @@ def isInBetween(op1x, op1y, op2x, op2y, inx, iny):
 		return False
 
 	if IsSameX:
-		if abs(op1y - op2y) > abs(op1y - iny):
+		'''if abs(op1y - op2y) > abs(op1y - iny):
+			return True'''
+		if inx == op2x:	#or inx == op1x
 			return True
 		return False
 	if IsSameY:
-		if abs(op1x - op2x) > abs(op1x - inx):
+		if iny == op2y:	#or iny == op1y
 			return True
 		return False
 

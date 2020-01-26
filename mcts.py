@@ -40,8 +40,6 @@ class State():
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
 	def next_state(self):
-		if self.numberOfMoves == 0 or self.moveCount > 30:
-			raise ValueError('-----Terminalden üretti!!!-----')
 
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
@@ -63,15 +61,8 @@ class State():
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
-		self.BoardObject.print()
 
 		if capturedPieceNotation != "XX":
-			if capturedPieceNotation[1] == "K":
-				print("\n\n")
-				print("Sıra:" + self.color)
-				print("Yiyen taşın koordinatı: " + current_action[0]+current_action[1])
-				print("Yenilen taşın: " + current_action[2]+current_action[3])
-				raise ValueError('-----SAH YENILDI!!!-----')
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, otherList)
@@ -105,11 +96,7 @@ class State():
 		checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
 		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, checkedby, checkDirectThreats, checkAllThreats)
 		next.numberOfMoves = len(next.availableActions)
-		print("\n\n")
-		print(next.availableActions)
-		print("\n")
-
-
+		
 		return next
 	def terminal(self):
 		if self.moveCount > 30 or self.numberOfMoves == 0:

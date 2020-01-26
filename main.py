@@ -37,15 +37,15 @@ def train(policy_net, target_net):
 			#print("Humanistic state: " + str(em.get_humanistic_state()))
 			print("-----------Training Starts-----------")
 			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("white")
-			print("IsCheck:" + str(checkedby))
+			'''print("IsCheck:" + str(checkedby))
 			print("DirectThreats:" + str(checkDirectThreats))
-			print("AllThreats:" + str(checkAllThreats))
+			print("AllThreats:" + str(checkAllThreats))'''
 			em.available_actions.clear()
 			if len(em.calculate_available_actions("white", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
 				print("Black wins!\n")
 				exit(0)
 
-			em = mcts.initializeTree(em, "white", 1)
+			em = mcts.initializeTree(em, "white", 5)
 			em.print()
 
 			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("black")
