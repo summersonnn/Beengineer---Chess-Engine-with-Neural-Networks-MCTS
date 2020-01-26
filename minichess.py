@@ -510,7 +510,10 @@ class Pawn():
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + (self.notation[1] if self.X != 1 else "=R")
 					available_actions.append(ad.actions[action_string])
 	
-		return available_actions if not IsForCalculatingThreats else threated_bits
+		if IsForCheck or IsForCalculatingThreats:
+			return threated_bits
+		
+		return available_actions
 
 	#When switched to full board, check the cases where slope is 1 or -1. There is no need to check for them since there are no bishop or queens to threat the king.
 	def IsOkayForKingSafety(self, theboard, FriendlyKing, candidateX, candidateY):
@@ -528,18 +531,21 @@ class Pawn():
 				if targetY > 2 or targetY < 0:
 					return True
 				#If there is a piece between current piece and king, then there is no pin which means it's safe to move
-				if targetY < self.Y and theboard[self.X][targetY] != "XX":
+				if (targetY < self.Y and isYGreaterThanKing == 1 or targetY > self.Y and isYGreaterThanKing == -1) and theboard[self.X][targetY] != "XX":
 					return True
 				#Pass the current piece or inbetween empty squares (It's empty since it didn't get caught by the if block above)
-				if targetY <= self.Y:
+				if (targetY <= self.Y and isYGreaterThanKing == 1 or targetY >= self.Y and isYGreaterThanKing == -1):
 					continue
 				#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
 				if theboard[self.X][targetY][0] == "+" and self.color == "white" or theboard[self.X][targetY][0] == "-" and self.color == "black":
 					return True
+				#If it is empty, pass (The square from piece to opposite direction of king)	
+				elif theboard[self.X][targetY] == "XX":
+					continue
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[self.X][targetY][1] == "R":
+					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, self.X, self.Y, candidateX, candidateY):
 						return False
 					else:
 						return True
@@ -552,18 +558,21 @@ class Pawn():
 				if targetX > 5 or targetX < 0:
 					return True
 				#If there is a piece between current piece and king, then there is no pin which means it's safe to move
-				if targetX < self.X and theboard[targetX][self.Y] != "XX":
+				if (targetX < self.X and isXGreaterThanKing == 1 or targetX > self.X and isXGreaterThanKing == -1) and theboard[targetX][self.Y] != "XX":
 					return True
 				#Pass the current piece or inbetween empty squares (It's empty since it didn't get caught by the if block above)
-				if targetX <= self.X:
+				if (targetX <= self.X and isXGreaterThanKing == 1 or targetX >= self.X and isXGreaterThanKing == -1):
 					continue
 				#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
 				if theboard[targetX][self.Y][0] == "+" and self.color == "white" or theboard[targetX][self.Y][0] == "-" and self.color == "black":
 					return True
+				#If it is empty, pass (The square from piece to opposite direction of king)	
+				elif theboard[targetX][self.Y] == "XX":
+					continue
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[targetX][self.Y][1] == "R":
+					if theboard[targetX][self.Y][1] == "R" and not isInBetween(targetX, self.Y, self.X, self.Y, candidateX, candidateY):
 						return False
 					else:
 						return True
@@ -787,12 +796,12 @@ class Rook():
 				if theboard[self.X][targetY][0] == "+" and self.color == "white" or theboard[self.X][targetY][0] == "-" and self.color == "black":
 					return True
 				#If it is empty, pass (The square from piece to opposite direction of king)
-				if theboard[self.X][targetY] == "XX":
+				elif theboard[self.X][targetY] == "XX":
 					continue
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
 					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[self.X][targetY][1] == "R":
+					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, self.X, self.Y, candidateX, candidateY):
 						return False
 					else:
 						return True
@@ -814,7 +823,7 @@ class Rook():
 				if theboard[targetX][self.Y][0] == "+" and self.color == "white" or theboard[targetX][self.Y][0] == "-" and self.color == "black":
 					return True
 				#If it is empty, pass (The square from piece to opposite direction of king)
-				if theboard[targetX][self.Y] == "XX":
+				elif theboard[targetX][self.Y] == "XX":
 					continue
 				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 				else:
