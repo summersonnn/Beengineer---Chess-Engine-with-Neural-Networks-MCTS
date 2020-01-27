@@ -99,20 +99,15 @@ class State():
 		
 		return next
 	def terminal(self):
-		if self.moveCount > 30 or self.numberOfMoves == 0:
+		if self.moveCount > 50 or self.numberOfMoves == 0:
 			return True
 		return False
 	def reward(self):
 		if self.numberOfMoves == 0:
 			reward = 1 if self.color == "black" else -1
-		elif self.moveCount > 30:
-			if len(self.BoardObject.WhitePieceList) > len(self.BoardObject.BlackPieceList):
-				reward = 1
-			elif len(self.BoardObject.WhitePieceList) < len(self.BoardObject.BlackPieceList):
-				reward = -1
-			else:
-				reward = 0
-		
+		elif self.moveCount > 50:
+			reward = 0
+
 		return reward
 
 	def __hash__(self):
@@ -175,19 +170,22 @@ class Node():
 		return node.children[-1]
 
 	def BESTCHILD(self, node,scalar):
-		bestscore=-99
+		bestscore=-1000 if node.state.color == "white" else 1000
 		bestchildren=[]
 
 		for c in node.children:
 			if c.visits == 0:
-				score = 99
+				score = 100 if node.state.color == "white" else -100
 			else:
 				exploit=c.reward/c.visits
 				explore=math.sqrt(math.log(node.visits)/float(c.visits))	
 				score=exploit+scalar*explore
 			if score==bestscore:
 				bestchildren.append(c)
-			if score>bestscore:
+			if score > bestscore and node.state.color == "white":
+				bestchildren=[c]
+				bestscore=score
+			elif score < bestscore and node.state.color =="black":
 				bestchildren=[c]
 				bestscore=score
 		if len(bestchildren)==0:

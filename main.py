@@ -45,7 +45,7 @@ def train(policy_net, target_net):
 				print("Black wins!\n")
 				exit(0)
 
-			em = mcts.initializeTree(em, "white", 5)
+			em = mcts.initializeTree(em, "white", 1)
 			em.print()
 
 			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("black")
