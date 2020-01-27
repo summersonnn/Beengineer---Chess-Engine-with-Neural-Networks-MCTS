@@ -616,7 +616,7 @@ class Rook():
 					available_actions.append(ad.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K"))
 
-				elif rightFlag and self.color == "white" and theboard[self.X][self.Y + i][0] == "-" or self.color == "black" and theboard[self.X][self.Y + i][0] == "+":
+				elif rightFlag and (self.color == "white" and theboard[self.X][self.Y + i][0] == "-" or self.color == "black" and theboard[self.X][self.Y + i][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					rightFlag = False
@@ -639,7 +639,7 @@ class Rook():
 					available_actions.append(ad.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X, self.Y - i, "+K" if self.color == "black" else "-K"))
 
-				elif leftFlag and self.color == "white" and theboard[self.X][self.Y - i][0] == "-" or self.color == "black" and theboard[self.X][self.Y - i][0] == "+":
+				elif leftFlag and (self.color == "white" and theboard[self.X][self.Y - i][0] == "-" or self.color == "black" and theboard[self.X][self.Y - i][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					leftFlag = False
@@ -667,7 +667,7 @@ class Rook():
 					available_actions.append(ad.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
 
-				elif downFlag and self.color == "white" and theboard[self.X + i][self.Y][0] == "-" or self.color == "black" and theboard[self.X + i][self.Y][0] == "+":
+				elif downFlag and (self.color == "white" and theboard[self.X + i][self.Y][0] == "-" or self.color == "black" and theboard[self.X + i][self.Y][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X + i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					downFlag = False
@@ -690,7 +690,7 @@ class Rook():
 					available_actions.append(ad.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X - i, self.Y, "+K" if self.color == "black" else "-K"))
 
-				elif upFlag and self.color == "white" and theboard[self.X - i][self.Y][0] == "-" or self.color == "black" and theboard[self.X - i][self.Y][0] == "+":
+				elif upFlag and (self.color == "white" and theboard[self.X - i][self.Y][0] == "-" or self.color == "black" and theboard[self.X - i][self.Y][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X - i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 					upFlag = False
