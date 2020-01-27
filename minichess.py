@@ -156,8 +156,8 @@ class MiniChess():
 		self.available_actions = []
 		return None
 
+	#At the moment, runs for user movements. Engine moves use InitializeTree Function in mcts.py which returns best child(continuation) of given state
 	def step(self, enemyMove):
-
 		first = 6 - int(enemyMove[1])
 		third = 6 - int(enemyMove[3])
 
@@ -177,11 +177,6 @@ class MiniChess():
 			fourth = 2 
 		else:
 			raise ValueError('-----WRONG INPUT-----')
-		'''inv_actions = {v: k for k, v in ad.actions.items()}
-		current_action = inv_actions[action]
-		del inv_actions
-		#We got the action string e.g "0201K"
-		#Now we will edit the board and pass the resulting board to MCSearchTree so that it can return us a reward'''
 
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = self.board[first][second]	#e.g "+P"
@@ -189,7 +184,7 @@ class MiniChess():
 		self.board[first][second] = "XX"
 		self.bitVectorBoard[oldcoorBit] = 0
 
-
+		#Arrange the notation of the piece after move in case of promotion. Also check if there is a promotion.
 		pieceNotationAfterMove = pieceNotationBeforeMove
 		promoted = False
 		if pieceNotationBeforeMove == "+P" and third == 0:
@@ -200,15 +195,15 @@ class MiniChess():
 			promoted = True
 
 		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
-		ListToUse = self.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BlackPieceList
-		otherList = self.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BlackPieceList
+		friendList = self.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BlackPieceList
+		enemyList = self.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BlackPieceList
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
 		capturedPieceNotation = self.board[third][fourth]
 		if capturedPieceNotation != "XX":
 			capturedPieceBit = coorToBitVector(third, fourth, capturedPieceNotation)
 			self.bitVectorBoard[capturedPieceBit] = 0
-			self.removeCapturedPiece(capturedPieceBit, otherList)
+			self.removeCapturedPiece(capturedPieceBit, enemyList)
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
 		self.board[third][fourth] = pieceNotationAfterMove
@@ -217,27 +212,16 @@ class MiniChess():
 
 		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
 		if not promoted:
-			for i in ListToUse:
+			for i in friendList:
 				if i.BitonBoard == oldcoorBit:
 					i.step(newcoorBit, third, fourth) 
 		#if promoted, create a new object and kill the pawn object
 		else:
-			ListToUse.append(Rook(color, third, fourth, self))	#Warning! Possible costly operation. Test it.
-			#Not captured, but since promoted, pawn object must be deleted
-			self.removeCapturedPiece(oldcoorBit, ListToUse)
+			#Not captured, but since promoted, pawn object must be deleted. Also create new Rook object.
+			friendList.append(Rook(color, third, fourth))
+			self.removeCapturedPiece(oldcoorBit, friendList)
 
-		'''reward = 0
-		terminal = False
-
-		print("----------Just before into MCTS--------------")
-		mcts.initializeTree(self, color, 5)
-		#Yeni durumdaki board'ı MCTS'ye, süreyle birlikte ver. 
-		#İlk etapta NN'i kullanmayıp MCTS'yi test edelim. Bunun için sürekli explore etmesini sağlayacağım.
-		#Bu durumda reward ve terminal hiçbir şey ifade etmeyeceği için, değiştirmiyoruz, 0 kalsınlar.
-
-		return reward, terminal'''
-		return self
-
+	#Removes the piece from corresponding color's piece list by matching the BitVector of pieces to incoming argument
 	def removeCapturedPiece(self, BitonBoard, incomingList):
 		for index,i in enumerate(incomingList,0):
 			if i.BitonBoard == BitonBoard:
@@ -247,6 +231,8 @@ class MiniChess():
 
 	#Color is the color the player who may be in check (whom turn to move)
 	#Returns the number of checks from pieces. 0 = No check  e.g 2 = Checked by 2 pieces at the same time
+	#Also checks direct threats that arise from check, and all threats from enemy pieces.
+	#Behindkingbit threat actually arises from DirectThreats but we add it to AllThreats to make things easier in the future.
 	def IsCheck(self, color):
 		checkedBy = 0
 		OurKingX = self.WhitePieceList[0].X if color == "white" else self.BlackPieceList[0].X
@@ -281,21 +267,23 @@ class MiniChess():
 					DirectThreatedBits += direct
 					DirectThreatedBits.append(coorToBitVector(i.X, i.Y, "+K" if color == "white" else "-K"))
 
-		#After obtaining threated bits by enemy pieces, we check if our king is in one of them.
+		#After obtaining Direct threated bits by enemy pieces, we check if our king is in one of them.
 		for bit in DirectThreatedBits:
 			if friendlyList[0].BitonBoard == bit:
 				checkedBy += 1
 
-		#We used threatedbits from checking squares to obtain how many checks, but we need to pass all threats in the end so we compute
+		#We used threatedbits from checking squares to obtain how many checks, but we need to pass all threats in the end so we compute it.
 		return checkedBy, DirectThreatedBits, self.calculateThreatedSquares(color) + behindKingBit
 
-	#Tehdit edilen kareler hesaplanıyor, bitvector listesi olarak.
+	#Calculates threated squares in therms of bit representation.
+	#Incoming argument = White means calculate black's pieces' threats (or vice versa)
 	def calculateThreatedSquares(self, color):
 		if color == "white":
 			return self.calculate_available_actions("black", True)	
 		elif color == "black":
 			return self.calculate_available_actions("white", True)
-	#Tahtayı yazdırır.
+
+	#Print the board
 	def print(self):
 		for i in range(6):
 			for j in range(3):
@@ -304,15 +292,17 @@ class MiniChess():
 
 	#If IsForCalculatingThreats is True, this function calculates vectorbits of threated squares, if False, available actions.
 	#Checkby is given if we're in check, and it is the number of checks at the same time. If it is not explicitly given, which means we're not in check, it comes as 0
-	#checkThreats is the threats from enemy piece that provide checks, we will look at these bits to destroy the check
+	#checkRookThreats is the threats from enemy Rook piece that provide checks, we will look at these bits to destroy the check
+	#checkAllThreats is all threats from enemy pieces
 	def calculate_available_actions(self, forColor, IsForCalculatingThreats=False, checkedBy=0, checkRookThreats=None, checkAllThreats=None):
 		available_actions = []
 		ThreatedSquares = []
+
 		#If this function is called in order to calculate available actions, we FIRST need to calculate threatedsquares. So we fill it!
-		#But if we are in check, threated squares are already coming as parameter, we will use it.
 		if not IsForCalculatingThreats and checkedBy == 0:
 			ThreatedSquares = self.calculateThreatedSquares(forColor)
 
+		#But if we are in check, threated squares are already coming as parameter, we use it.
 		if checkedBy > 0:
 			ThreatedSquares = checkAllThreats
 		
@@ -331,6 +321,7 @@ class MiniChess():
 				for i in self.BlackPieceList[1:]:
 					available_actions += i.possibleActions(self.board, self.BlackPieceList[0], IsForCalculatingThreats) if checkedBy == 0 else i.possibleActions(self.board, self.BlackPieceList[0], False, False, 100, 100, checkAllThreats, checkRookThreats)
 
+		#If this function has ran for calculating available actions, we update object's available actions list
 		if not IsForCalculatingThreats:
 			self.available_actions += available_actions
 
@@ -348,8 +339,6 @@ class MiniChess():
 	def get_humanistic_state(self):
 		return [self.WhiteX, self.WhiteY]
 
-
-#Şah class'ıdır. Objesi, MiniChess clasının içinde oluşturulur. Şah objesi, MiniChess clasının bir elemanıdır.
 class King():
 	class_counter = 0
 
@@ -366,7 +355,6 @@ class King():
 		self.id = King.class_counter
 		King.class_counter += 1
 
-	#MiniChess'teki step fonksiyonu tarafından çağrılır. Şah'ın pozisyonunu düzenler.
 	def step(self, BitonBoard, newX, newY):
 		self.BitonBoard = BitonBoard
 		self.X = newX
@@ -458,9 +446,10 @@ class Pawn():
 		self.X = newX
 		self.Y = newY
 
-	#checkThreats is NOT false whenever we're calculating legal moves to get rid of the check
+	#checkDirectThreats is NOT false whenever we're calculating legal moves to get rid of the check
 	#EnemyKingX, EnemyKingY are reduntant here. Remove these parameters once you correct all calls to here.
-	#checkThreats is the threats from enemy piece that provide checks, we will look at these bits to destroy the check
+	#checkDirectThreats is the threats from enemy piece that provide checks, we will look at these bits to destroy the check
+	#CheckThreats is redundant
 	def possibleActions(self, theboard, FriendlyKing, IsForCalculatingThreats=False, IsForCheck=False, EnemyKingX=None, EnemyKingY=None, checkThreats=None, checkDirectThreats=None):
 	#theboard is the board member in the MiniChess object
 		available_actions = []
@@ -582,8 +571,7 @@ class Pawn():
 class Rook():
 	class_counter = 0
 
-	#Minichess object is not NONE if the Rook is initalized via promotion
-	def __init__(self, color, x, y, MiniChessObject=None):
+	def __init__(self, color, x, y):
 		self.color = color
 		if color == "white":
 			self.notation = "+R"
@@ -596,11 +584,6 @@ class Rook():
 		self.id = Rook.class_counter
 		Rook.class_counter += 1
 		
-		#Edit the minichess object, so that bitvector is updated after promotion
-		if MiniChessObject != None:
-			MiniChessObject.bitVectorBoard[self.BitonBoard] = 1
-
-
 	def step(self, BitonBoard, newX, newY, IsCaptured=False):
 		self.BitonBoard = BitonBoard
 		self.X = newX
@@ -608,8 +591,9 @@ class Rook():
 
 	#IsForCheck is used when we're checking if player A is in check or not. To do this, we check the possible Rook moves of player B.
 	#EnemyKing coordinates are given if IsForCheck = True
-	#checkThreats is the threats from enemy piece that provide checks, we will look at these bits to destroy the check
-	#checkThreats is NOT false whenever we're calculating legal moves to get rid of the check
+	#checkDirectThreats is the threats from enemy piece that provide checks, we will look at these bits to destroy the check
+	#checkDirectThreats is NOT false whenever we're calculating legal moves to get rid of the check
+	#CheckThreats is redundant
 	def possibleActions(self, theboard, FriendlyKing, IsForCalculatingThreats=False, IsForCheck=False, EnemyKingX=None, EnemyKingY=None, checkThreats=None, checkDirectThreats=None):
 	#theboard is the board member in the MiniChess object
 		available_actions = []
@@ -639,7 +623,6 @@ class Rook():
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X][self.Y + i][1] == "K"  : threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K"))
 					
-
 					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
 					if IsForCheck and self.Y + i + 1 < 3:
 						behindKingBit.append(coorToBitVector(self.X, self.Y + i + 1, "+K" if self.color == "black" else "-K"))
@@ -663,7 +646,6 @@ class Rook():
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X][self.Y - i][1] == "K" : threated_bits.append(coorToBitVector(self.X, self.Y - i, "+K" if self.color == "black" else "-K"))
 					
-
 					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
 					if IsForCheck and self.Y - i - 1 >=0:
 						behindKingBit.append(coorToBitVector(self.X, self.Y - i - 1, "+K" if self.color == "black" else "-K"))
@@ -692,7 +674,6 @@ class Rook():
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X + i][self.Y][1] == "K" : threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
 					
-
 					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
 					if IsForCheck and self.X + i + 1 < 6:
 						behindKingBit.append(coorToBitVector(self.X + i + 1, self.Y, "+K" if self.color == "black" else "-K"))
@@ -716,7 +697,6 @@ class Rook():
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X - i][self.Y][1] == "K" : threated_bits.append(coorToBitVector(self.X - i, self.Y, "+K" if self.color == "black" else "-K"))
 					
-
 					#The square behind the enemy king, will also be threatened, so we add it. (If we're calculating for checks)
 					if IsForCheck and self.X - i - 1 >=0:
 						behindKingBit.append(coorToBitVector(self.X - i - 1, self.Y, "+K" if self.color == "black" else "-K"))

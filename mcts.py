@@ -9,19 +9,9 @@ import actionsdefined as ad
 from copy import copy, deepcopy
 
 
-"""
-A quick Monte Carlo Tree Search implementation.  For more details on MCTS see See http://pubs.doc.ic.ac.uk/survey-mcts-methods/survey-mcts-methods.pdf
-The State is just a game where you have NUM_TURNS and at turn i you can make
-a choice from [-2,2,3,-3]*i and this to to an accumulated value.  The goal is for the accumulated value to be as close to 0 as possible.
-The game is not very interesting but it allows one to study MCTS which is.  Some features 
-of the example by design are that moves do not commute and early mistakes are more costly.  
-In particular there are two models of best child that one can use 
-"""
-
 #MCTS scalar.  Larger scalar will increase exploitation, smaller will increase exploration. 
 SCALAR=2
 EXPAND_NUMBER = 3
-
 
 class State():
 	
@@ -29,8 +19,8 @@ class State():
 		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
 		self.BoardObject = BoardObject				# Minichess object
 		self.numberOfMoves = len(self.availableActions)
-		self.checkedby = 0
-		self.moveCount = 0							#
+		self.checkedby = 0							#How many checks that the player is facing?
+		self.moveCount = 0							#How many moves played until reaching current state
 		self.color = color							# "white" or "black"
 		self.exclusive_board_string = ""  			# It will be calculated once the board representation is changed at the next_state function
 
@@ -41,7 +31,6 @@ class State():
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
 	def next_state(self):
-
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
 		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves - 1)] #e.g 145
@@ -53,12 +42,15 @@ class State():
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = self.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
 		oldcoorBit = mic.coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
-		
+		next.BoardObject.board[int(current_action[0])][int(current_action[1])] = "XX"
+		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
+
+		#Arrange the notation of the piece after move in case of promotion. Also check if there is a promotion.
 		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
 		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
 		promoted = True if len(current_action) == 6 else False
-		ListToUse = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '+' else next.BoardObject.BlackPieceList
-		otherList = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '-' else next.BoardObject.BlackPieceList
+		friendList = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '+' else next.BoardObject.BlackPieceList
+		enemyList = next.BoardObject.WhitePieceList if pieceNotationAfterMove[0] == '-' else next.BoardObject.BlackPieceList
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
@@ -66,28 +58,24 @@ class State():
 		if capturedPieceNotation != "XX":
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
-			next.BoardObject.removeCapturedPiece(capturedPieceBit, otherList)
+			next.BoardObject.removeCapturedPiece(capturedPieceBit, enemyList)
 			
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
 		next.BoardObject.board[int(current_action[2])][int(current_action[3])] = pieceNotationAfterMove
-		#print("Piece notation after move: " + pieceNotationAfterMove)
 		newcoorBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), pieceNotationAfterMove)
 		next.BoardObject.bitVectorBoard[newcoorBit] = 1
 
-		next.BoardObject.board[int(current_action[0])][int(current_action[1])] = "XX"
-		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
-
 		#Call the step function of the object, to make it renew itself (if the object is still valid, which means promotion did not happen)
 		if not promoted:
-			for i in ListToUse:
+			for i in friendList:
 				if i.BitonBoard == oldcoorBit:
 					i.step(newcoorBit, int(current_action[2]), int(current_action[3]) ) 
 		#if promoted, create a new object and kill the pawn object
 		else:
-			ListToUse.append(mic.Rook(color, int(current_action[2]), int(current_action[3]), self.BoardObject))	#Warning! Possible costly operation. Test it.
 			#Not captured, but since promoted, pawn object must be deleted
-			next.BoardObject.removeCapturedPiece(oldcoorBit, ListToUse)
+			friendList.append(mic.Rook(color, int(current_action[2]), int(current_action[3])))	#Warning! Possible costly operation. Test it.
+			next.BoardObject.removeCapturedPiece(oldcoorBit, friendList)
 
 		next.build_exclusive_string()	#New exclusive string is constructed, ready for being hashed
 		next.moveCount += 1	#In the new node, movecount will be one more
@@ -98,12 +86,13 @@ class State():
 		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, checkedby, checkDirectThreats, checkAllThreats)
 		next.numberOfMoves = len(next.availableActions)
 		next.checkedby = checkedby
-		
 		return next
+
 	def terminal(self):
 		if self.moveCount > 50 or self.numberOfMoves == 0:
 			return True
 		return False
+
 	def reward(self):
 		if self.numberOfMoves == 0:
 			#Stalemate
@@ -175,6 +164,9 @@ class Node():
 			tried_children += [new_state]
 		return node.children[-1]
 
+	#Score for childs are calculated according to color of current node. Because rewards were calculated according to color. 
+	#If white, bigger score means better child.
+	#If black, lower score means better child.
 	def BESTCHILD(self, node,scalar):
 		bestscore=-1000 if node.state.color == "white" else 1000
 		bestchildren=[]
@@ -215,9 +207,6 @@ def initializeTree(boardobject, color, timeout):
 	root.state.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
 
 	result = root.UCTSEARCH(root, timeout)
-	'''print("At %d level, state: %s" %(i+1, result.state.word))
-	print("At this level, all nodes looks like the following: ")
-	for i,c in enumerate(root.children):
-		print(i,c)'''
+	
 	root = result
 	return root.state.BoardObject

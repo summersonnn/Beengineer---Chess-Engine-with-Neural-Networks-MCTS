@@ -63,7 +63,7 @@ def train(policy_net, target_net):
 			enemyMove = ""
 			while len(enemyMove) != 4:
 				enemyMove = input("What's your move? Type it in that format: a1a2 which means move the piece in a1 to a2 (or capture)")
-			em = em.step(enemyMove)
+			em.step(enemyMove)
 
 
 			'''raise ValueError('-----END OF MCTS-----')
