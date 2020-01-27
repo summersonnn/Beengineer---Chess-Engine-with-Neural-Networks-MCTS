@@ -29,6 +29,7 @@ class State():
 		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
 		self.BoardObject = BoardObject				# Minichess object
 		self.numberOfMoves = len(self.availableActions)
+		self.checkedby = 0
 		self.moveCount = 0							#
 		self.color = color							# "white" or "black"
 		self.exclusive_board_string = ""  			# It will be calculated once the board representation is changed at the next_state function
@@ -96,6 +97,7 @@ class State():
 		checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
 		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, checkedby, checkDirectThreats, checkAllThreats)
 		next.numberOfMoves = len(next.availableActions)
+		next.checkedby = checkedby
 		
 		return next
 	def terminal(self):
@@ -104,7 +106,11 @@ class State():
 		return False
 	def reward(self):
 		if self.numberOfMoves == 0:
-			reward = 1 if self.color == "black" else -1
+			#Stalemate
+			if self.checkedby == 0:
+				reward = 0
+			else:
+				reward = 1 if self.color == "black" else -1
 		elif self.moveCount > 50:
 			reward = 0
 

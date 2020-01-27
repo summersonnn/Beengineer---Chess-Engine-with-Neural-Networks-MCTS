@@ -42,7 +42,10 @@ def train(policy_net, target_net):
 			print("AllThreats:" + str(checkAllThreats))'''
 			em.available_actions.clear()
 			if len(em.calculate_available_actions("white", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
-				print("Black wins!\n")
+				if checkedby == 0:
+					print("Stalemate!\n")
+				else:
+					print("Black wins!\n")
 				exit(0)
 
 			em = mcts.initializeTree(em, "white", 1)
@@ -51,7 +54,10 @@ def train(policy_net, target_net):
 			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("black")
 			em.available_actions.clear()
 			if len(em.calculate_available_actions("black", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
-				print("White wins!\n")
+				if checkedby == 0:
+					print("Stalemate!\n")
+				else:
+					print("White wins!\n")
 				exit(0)
 
 			enemyMove = ""
