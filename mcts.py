@@ -17,12 +17,14 @@ class State():
 	
 	def __init__(self, BoardObject, color):
 		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
-		self.BoardObject = BoardObject				# Minichess object
+		self.leftActions = deepcopy(BoardObject.available_actions)	#Actions that are not used to spawn a child. Initialized same as avActs but will be changed when a child is spawned
+		self.BoardObject = BoardObject								# Minichess object
 		self.numberOfMoves = len(self.availableActions)
+		self.numberOfLeftMoves = len(self.leftActions)				#Number of moves that left to spawn a child
 		self.checkedby = 0							#How many checks that the player is facing?
 		self.moveCount = 0							#How many moves played until reaching current state
 		self.color = color							# "white" or "black"
-		self.exclusive_board_string = ""  			# It will be calculated once the board representation is changed at the next_state function
+		self.exclusive_board_string = ""  		
 
 	def build_exclusive_string(self):
 		self.exclusive_board_string =""
@@ -30,10 +32,17 @@ class State():
 			for j in range(3):
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
-	def next_state(self):
+	def next_state(self, forRollout=False):
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
-		nextActionNumber = self.availableActions[random.randint(0, self.numberOfMoves - 1)] #e.g 145
+		nextActionToChoose = random.randint(0, self.numberOfLeftMoves - 1)
+		nextActionNumber = self.leftActions[nextActionToChoose] #e.g 145
+
+		#Decrementing number of left moves and deleting the action that is already used to spawned a child. 
+		#Original actions will be left in self.availableActions
+		if not forRollout:
+			del self.leftActions[nextActionToChoose]
+			self.numberOfLeftMoves -= 1
 
 		inv_actions = {v: k for k, v in ad.actions.items()}
 		current_action = inv_actions[nextActionNumber]
@@ -84,7 +93,9 @@ class State():
 
 		checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
 		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, checkedby, checkDirectThreats, checkAllThreats)
+		next.leftActions = deepcopy(next.availableActions)
 		next.numberOfMoves = len(next.availableActions)
+		next.numberOfLeftMoves = len(next.leftActions)
 		next.checkedby = checkedby
 		return next
 
@@ -149,17 +160,12 @@ class Node():
 			node=self.BESTCHILD(node,SCALAR)
 		return node
 	 
-	#Leaf node expand ettirir. Oluşturulacak child sayısı parametre olarak verilir.
-	#customExpand = 0 means we will expand as many as numberofmoves - number of children
-	def EXPAND(self, node, customExpand=0):
-		if customExpand == 0:
-			customExpand = node.state.numberOfMoves - len(node.children)
+	#Leaf node expand ettirir.
+	def EXPAND(self, node):
 
-		for i in range(customExpand):
+		for i in range(node.state.numberOfMoves):
 			tried_children=[c.state for c in node.children]
 			new_state=node.state.next_state()
-			while new_state in tried_children and node.state.numberOfMoves > len(tried_children):
-				new_state=node.state.next_state()
 			node.add_child(new_state)
 			tried_children += [new_state]
 		return node.children[-1]
@@ -192,7 +198,7 @@ class Node():
 
 	def ROLLOUT(self, state):
 		while state.terminal()==False:
-			state=state.next_state()
+			state=state.next_state(True)
 		return state.reward()
 
 	def BACKUP(self, node, reward):
