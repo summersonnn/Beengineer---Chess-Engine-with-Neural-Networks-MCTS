@@ -21,49 +21,71 @@ eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 1
-max_steps_per_episode = 30
+num_episodes = 100
+max_steps_per_episode = 15
 
 def train(policy_net, target_net):
+	whiteWins = 0
+	blackWins = 0
+	drawByMoveRule = 0
+	drawByStaleMate = 0
 	global loss
 	global em
 	steps_per_episode = []	#counts how many steps played in each episode
 	for episode in range(past_episodes, num_episodes + past_episodes):
 		print("Episode number: " + str(episode))
-		#em.reset()	#reset the environment to start all over again
+		em.reset()	#reset the environment to start all over again
 		#state = em.get_state()	#get the first state from the environment as a tensor 
 
 		for step in range(max_steps_per_episode):
-			#print("Humanistic state: " + str(em.get_humanistic_state()))
-			print("-----------Training Starts-----------")
+			#print("-----------Training Starts-----------")
 			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("white")
-			'''print("IsCheck:" + str(checkedby))
-			print("DirectThreats:" + str(checkDirectThreats))
-			print("AllThreats:" + str(checkAllThreats))'''
 			em.available_actions.clear()
 			if len(em.calculate_available_actions("white", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
 				if checkedby == 0:
 					print("Stalemate!\n")
+					drawByStaleMate += 1
+					em.print()
+					print("\n\n")
+					break
 				else:
 					print("Black wins!\n")
-				exit(0)
+					blackWins += 1
+					em.print()
+					print("\n\n")
+					break
+
 
 			em = mcts.initializeTree(em, "white", 1)
-			em.print()
 
 			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("black")
 			em.available_actions.clear()
 			if len(em.calculate_available_actions("black", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
 				if checkedby == 0:
 					print("Stalemate!\n")
+					drawByStaleMate += 1
+					em.print()
+					print("\n\n")
+					break
 				else:
 					print("White wins!\n")
-				exit(0)
+					whiteWins += 1
+					em.print()
+					print("\n\n")
+					break
 
-			enemyMove = ""
+			em = mcts.initializeTree(em, "black", 1)
+
+			if step == max_steps_per_episode -1:
+				print("Draw by max move rule!\n")
+				drawByMoveRule += 1
+				em.print()
+				print("\n\n")
+
+			'''enemyMove = ""
 			while len(enemyMove) != 4:
 				enemyMove = input("What's your move? Type it in that format: a1a2 which means move the piece in a1 to a2 (or capture)")
-			em.step(enemyMove)
+			em.step(enemyMove)'''
 
 
 			'''raise ValueError('-----END OF MCTS-----')
@@ -128,6 +150,13 @@ def train(policy_net, target_net):
 		print("Exploration rate: " + str(agent.tell_me_exploration_rate()))
 		print("Steps per episode: " + str(steps_per_episode[-10:])+ '\n')
 		print("Average steps: " + str(sum(steps_per_episode) / len(steps_per_episode)))'''
+
+
+	print("\n")
+	print("White Wins: " + str(whiteWins))	
+	print("Black Wins: " + str(blackWins))	
+	print("Draw By Move Rule: " + str(drawByMoveRule))	
+	print("Draw By Stalemate: " + str(drawByStaleMate))
 	return None
 
 def test(policy_net):

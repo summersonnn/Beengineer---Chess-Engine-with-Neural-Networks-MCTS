@@ -247,22 +247,22 @@ class MiniChess():
 		if color == "black" and OurKingX != 5:
 			if 	OurKingY > 0 and self.board[OurKingX + 1][OurKingY - 1] == "+P":
 				checkedBy += 1
-				DirectThreatedBits.append(coorToBitVector(OurKingX + 1, OurKingY - 1, "+K" if color == "white" else "-K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX + 1, OurKingY - 1, "-K"))
 			if OurKingY < 2 and self.board[OurKingX + 1][OurKingY + 1] == "+P":
 				checkedBy += 1
-				DirectThreatedBits.append(coorToBitVector(OurKingX + 1, OurKingY + 1, "+K" if color == "white" else "-K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX + 1, OurKingY + 1, "-K"))
 		if color == "white" and OurKingX != 0:
 			if 	OurKingY > 0 and self.board[OurKingX - 1][OurKingY - 1] == "-P": 
 				checkedBy += 1
-				DirectThreatedBits.append(coorToBitVector(OurKingX - 1, OurKingY - 1, "+K" if color == "white" else "-K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX - 1, OurKingY - 1, "+K"))
 			if OurKingY < 2 and self.board[OurKingX - 1][OurKingY + 1] == "-P":
 				checkedBy += 1
-				DirectThreatedBits.append(coorToBitVector(OurKingX - 1, OurKingY + 1, "+K" if color == "white" else "-K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX - 1, OurKingY + 1, "+K"))
 
 		#Check for king rank and king file for enemy rook. Rook only returns the threated bits from Rook to King, not opposite direction
 		for i in enemyList:
 			if i.notation[1] == "R":
-				if i.X == OurKingX or i.Y == OurKingY and i.DoesItThreatSquare(self.board, friendlyList[0].X, friendlyList[0].Y):
+				if (i.X == OurKingX or i.Y == OurKingY) and i.DoesItThreatSquare(self.board, friendlyList[0].X, friendlyList[0].Y):
 					direct, behindKingBit = i.possibleActions(self.board, enemyList[0], True, True, OurKingX, OurKingY)
 					DirectThreatedBits += direct
 					DirectThreatedBits.append(coorToBitVector(i.X, i.Y, "+K" if color == "white" else "-K"))

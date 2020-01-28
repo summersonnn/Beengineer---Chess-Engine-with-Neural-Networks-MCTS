@@ -65,6 +65,9 @@ class State():
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
 
 		if capturedPieceNotation != "XX":
+			if capturedPieceNotation[1] == "K":
+				raise ValueError('-----KING EATEN-----')
+
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, enemyList)
@@ -97,6 +100,7 @@ class State():
 		next.numberOfMoves = len(next.availableActions)
 		next.numberOfLeftMoves = len(next.leftActions)
 		next.checkedby = checkedby
+
 		return next
 
 	def terminal(self):
