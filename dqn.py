@@ -14,7 +14,7 @@ class DQN(nn.Module):
 	def __init__(self,):
 		super(DQN, self).__init__()
 
-		self.fc1 = nn.Linear(in_features=108, out_features=132)
+		self.fc1 = nn.Linear(in_features=109, out_features=132)
 		self.fc2 = nn.Linear(in_features=132, out_features=192)
 		self.fc3 = nn.Linear(in_features=192, out_features=216)
 		self.out = nn.Linear(in_features=216, out_features=282)

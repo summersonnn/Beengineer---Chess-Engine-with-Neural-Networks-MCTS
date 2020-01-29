@@ -22,7 +22,8 @@ class MiniChess():
 								1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,				#54 (siyah kaleler)
 								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,				#72 (beyaz şah)
 								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,				#90 (beyaz piyonlar)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1]				#108 (beyaz kaleler)
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,				#108 (beyaz kaleler)
+								0]													#109 -> No Progress Count (Real Valued)
 
 		'''self.board =  	[
 								["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],
@@ -96,7 +97,8 @@ class MiniChess():
 								1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,				#54 (siyah kaleler)
 								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,				#72 (beyaz şah)
 								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,				#90 (beyaz piyonlar)
-								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1]				#108 (beyaz kaleler)
+								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,				#108 (beyaz kaleler)
+								0]													#109 -> No Progress Count (Real Valued)
 
 		'''self.board =  	[
 							["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],
@@ -194,16 +196,25 @@ class MiniChess():
 			pieceNotationAfterMove = "-R"
 			promoted = True
 
+		#Increase No Progress count, if there is progress it will be set to zero in the upcoming lines
+		self.bitVectorBoard[108] += 1
+
+		#If pawn moves, Set No Progress Count back to 0
+		if pieceNotationBeforeMove[1] == "P":
+			self.bitVectorBoard[108] = 0
+
 		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
 		friendList = self.WhitePieceList if pieceNotationAfterMove[0] == '+' else self.BlackPieceList
 		enemyList = self.WhitePieceList if pieceNotationAfterMove[0] == '-' else self.BlackPieceList
 		
 		#If capture happened, obtain the BitBoard repr. of captured piece, then remove the piece object from piece object list
+		#Set No Progress Count back to 0
 		capturedPieceNotation = self.board[third][fourth]
 		if capturedPieceNotation != "XX":
 			capturedPieceBit = coorToBitVector(third, fourth, capturedPieceNotation)
 			self.bitVectorBoard[capturedPieceBit] = 0
 			self.removeCapturedPiece(capturedPieceBit, enemyList)
+			self.bitVectorBoard[108] = 0
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
 		self.board[third][fourth] = pieceNotationAfterMove

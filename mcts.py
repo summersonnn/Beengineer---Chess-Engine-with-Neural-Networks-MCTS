@@ -54,6 +54,13 @@ class State():
 		next.BoardObject.board[int(current_action[0])][int(current_action[1])] = "XX"
 		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
 
+		#Increase No Progress count, if there is progress it will be set to zero in the upcoming lines
+		next.BoardObject.bitVectorBoard[108] += 1
+
+		#If pawn moves, Set No Progress Count back to 0
+		if pieceNotationBeforeMove[1] == "P":
+			next.BoardObject.bitVectorBoard[108] = 0	
+
 		#Arrange the notation of the piece after move in case of promotion. Also check if there is a promotion.
 		pieceNotationAfterMove = pieceNotationBeforeMove[0] + current_action[-1]
 		color = "white" if pieceNotationAfterMove[0] == "+" else "black"
@@ -65,12 +72,10 @@ class State():
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
 
 		if capturedPieceNotation != "XX":
-			if capturedPieceNotation[1] == "K":
-				raise ValueError('-----KING EATEN-----')
-
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, enemyList)
+			next.BoardObject.bitVectorBoard[108] = 0
 			
 
 		#Update the board, obtain the new Bitboard repr. of the piece and update the bitvectorboard accordingly
@@ -104,7 +109,7 @@ class State():
 		return next
 
 	def terminal(self):
-		if self.moveCount > 50 or self.numberOfMoves == 0:
+		if self.BoardObject.bitVectorBoard[108] > 20 or self.numberOfMoves == 0:
 			return True
 		return False
 
@@ -115,7 +120,7 @@ class State():
 				reward = 0
 			else:
 				reward = 1 if self.color == "black" else -1
-		elif self.moveCount > 50:
+		elif self.BoardObject.bitVectorBoard[108] > 20:
 			reward = 0
 
 		return reward
