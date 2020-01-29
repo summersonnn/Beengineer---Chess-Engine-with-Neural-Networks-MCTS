@@ -12,5 +12,10 @@ def extract_tensors(experiences):
 
 	return (state_batch, action_batch, reward_batch, nextState_batch)
 
+#Place the incoming reward into the tempMemory
+def place_rewards(tempMemory, reward):
+	for i in range(len(tempMemory.memory)):
+		tempMemory.memory[i] = tempMemory.memory[i]._replace(reward = reward)
+
 
 

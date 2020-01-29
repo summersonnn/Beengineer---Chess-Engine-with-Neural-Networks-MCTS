@@ -7,7 +7,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import dqn
 import minichess
-import unrelatedmethods
+import unrelatedmethods as um
 import fileoperations
 import mcts
 
@@ -20,8 +20,9 @@ eps_end = 0.01	#minimum exploration rate
 eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
+per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 100
+num_episodes = 10
 max_steps_per_episode = 1500
 
 def train(policy_net, target_net):
@@ -31,63 +32,79 @@ def train(policy_net, target_net):
 	drawByStaleMate = 0
 	global loss
 	global em
-	steps_per_episode = []	#counts how many steps played in each episode
+
 	for episode in range(past_episodes, num_episodes + past_episodes):
 		print("Episode number: " + str(episode))
+		terminal = False
 		em.reset()	#reset the environment to start all over again
-		#state = em.get_state()	#get the first state from the environment as a tensor 
+		tempMemory = dqn.ReplayMemory(per_game_memory_size) #Create tempMemory for one match
+		
 
 		for step in range(max_steps_per_episode):
-			#print("-----------Training Starts-----------")
+			state = em.get_state()	#get the BitVectorBoard state from the environment as a tensor 
+
 			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("white")
 			em.available_actions.clear()
 			if len(em.calculate_available_actions("white", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
+				terminal = True
 				if checkedby == 0:
-					print("Stalemate!\n")
+					print("Stalemate!")
 					drawByStaleMate += 1
-					em.print()
-					print("\n\n")
-					break
+					um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
 				else:
-					print("Black wins!\n")
+					print("Black wins!")
 					blackWins += 1
-					em.print()
-					print("\n\n")
-					break
+					um.place_rewards(tempMemory, -1)	#Place -1 into the reward section of namedtuples in the tempMemory
 
+			#If the game didn't end with the last move, now it's white's turn to move
+			if not terminal: 
+				em, action = mcts.initializeTree(em, "white", 1)	#white makes his move
+				next_state = em.get_state()
 
-			em = mcts.initializeTree(em, "white", 1)
-			if em.bitVectorBoard[108] > 20:
-				print("Draw by no progress!\n")
+				#We don't know what the reward will be until the game ends. So put 0 for now.
+				state = state.unsqueeze(0)
+				next_state = next_state.unsqueeze(0)
+				tempMemory.push(dqn.Experience(state, action, next_state, 0, False))
+				state = next_state
+
+			#Check if 20 moves rule satisfied
+			if not terminal and em.bitVectorBoard[108] > 20:
+				terminal = True
+				print("Draw by no progress!")
 				drawByNoProgress += 1
-				em.print()
-				print("\n\n")
-				break
+				um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
+				
 
-
-			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("black")
-			em.available_actions.clear()
-			if len(em.calculate_available_actions("black", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
+			if not terminal: checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("black")
+			if not terminal: em.available_actions.clear()
+			if not terminal and len(em.calculate_available_actions("black", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
+				terminal = True
 				if checkedby == 0:
-					print("Stalemate!\n")
+					print("Stalemate!")
 					drawByStaleMate += 1
-					em.print()
-					print("\n\n")
-					break
+					um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
 				else:
-					print("White wins!\n")
+					print("White wins!")
 					whiteWins += 1
-					em.print()
-					print("\n\n")
-					break
+					um.place_rewards(tempMemory, 1)	#Place 1 into the reward section of namedtuples in the tempMemory
+				
+			#If the game didn't end with the last move, now it's black's turn to move
+			if not terminal: 
+				em, action = mcts.initializeTree(em, "black", 1)	#white makes his move
+				next_state = em.get_state()
+				#We don't know what the reward will be until the game ends. So put 0 for now.
+				next_state = next_state.unsqueeze(0)
+				tempMemory.push(dqn.Experience(state, action, next_state, 0, False))
 
-			em = mcts.initializeTree(em, "black", 1)
-			if em.bitVectorBoard[108] > 20:
-				print("Draw by no progress!\n")
+			#Check if 20 moves rule satisfied
+			if not terminal and em.bitVectorBoard[108] > 20:
+				terminal = True
+				print("Draw by no progress!")
 				drawByNoProgress += 1
-				em.print()
-				print("\n\n")
-				break
+				um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
+				
+				
+				
 
 			'''enemyMove = ""
 			while len(enemyMove) != 4:
@@ -100,10 +117,7 @@ def train(policy_net, target_net):
 			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
 			next_state = em.get_state()	#get the new state
 
-			#increase their sizes and push to replay memory. Sizes of st and nst have been increased in order to concatenate them in extract_tensors more easily.
-			state = state.unsqueeze(0)
-			next_state = next_state.unsqueeze(0)
-			memory.push(dqn.Experience(state, action, next_state, reward, terminal))	
+			
 
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
@@ -134,12 +148,18 @@ def train(policy_net, target_net):
 			state = next_state.squeeze(0) #go to next state which we calculated earlier
 
 			#If we're in a terminal state, we never step in the terminal state. We end the episode instead.
-			#Record the step number.
+			#Record the step number.'''
 			if terminal:
-				steps_per_episode.append(step)
-				#print("Terminal! : " + str(step))
-				#print(state)
-				break '''
+				print("Terminal!\n")
+
+				#Editing the last memory, so that its terminal value is True
+				tempMemory.memory[-1] = tempMemory.memory[-1]._replace(terminal = True)	
+
+				#Moving full tuples to big memory, and deleting the temp memory
+				memory.memory += tempMemory.memory
+				memory.push_count += tempMemory.push_count
+				del tempMemory
+				break 
 
 		#Update target network with weights and biases in the policy network
 		#Also create new model files
@@ -151,19 +171,16 @@ def train(policy_net, target_net):
 	            		'loss': loss,
 	            		'current_step': agent.current_step }, PATH_TO_DIRECTORY + "MiniChess-trained-model" + str(episode) + ".tar"
 						)
-			print("Episode:" + str(episode) + " -------Weights are updated!")
-
-		steps_per_episode.append(step)
-		print("Exploration rate: " + str(agent.tell_me_exploration_rate()))
-		print("Steps per episode: " + str(steps_per_episode[-10:])+ '\n')
-		print("Average steps: " + str(sum(steps_per_episode) / len(steps_per_episode)))'''
-
+			print("Episode:" + str(episode) + " -------Weights are updated!")'''
 
 	print("\n")
 	print("White Wins: " + str(whiteWins))	
 	print("Black Wins: " + str(blackWins))	
 	print("Draw By No Progress: " + str(drawByNoProgress))	
 	print("Draw By Stalemate: " + str(drawByStaleMate))
+	print("\n")
+	print("Memory length: " + str(len(memory.memory)))
+	print("Average Move per game: " + str(len(memory.memory) / num_episodes))
 	return None
 
 def test(policy_net):
@@ -231,6 +248,9 @@ if __name__ == '__main__':
 
 	#sys.exit() or raise SystemExit doesn't work for some reason. That's the only way I could end the process.
 	os.kill(os.getpid(), signal.SIGTERM)
+
+
+
 
 
 

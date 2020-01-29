@@ -18,6 +18,7 @@ class State():
 	def __init__(self, BoardObject, color):
 		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
 		self.leftActions = deepcopy(BoardObject.available_actions)	#Actions that are not used to spawn a child. Initialized same as avActs but will be changed when a child is spawned
+		self.createdByThisAction = 0								#Tells which action resulted in this state
 		self.BoardObject = BoardObject								# Minichess object
 		self.numberOfMoves = len(self.availableActions)
 		self.numberOfLeftMoves = len(self.leftActions)				#Number of moves that left to spawn a child
@@ -37,6 +38,7 @@ class State():
 		next.color = "white" if self.color == "black" else "black"
 		nextActionToChoose = random.randint(0, self.numberOfLeftMoves - 1)
 		nextActionNumber = self.leftActions[nextActionToChoose] #e.g 145
+		next.createdByThisAction = nextActionNumber
 
 		#Decrementing number of left moves and deleting the action that is already used to spawned a child. 
 		#Original actions will be left in self.availableActions
@@ -224,4 +226,4 @@ def initializeTree(boardobject, color, timeout):
 	result = root.UCTSEARCH(root, timeout)
 	
 	root = result
-	return root.state.BoardObject
+	return root.state.BoardObject, root.state.createdByThisAction
