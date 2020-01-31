@@ -22,7 +22,7 @@ target_update = 5	#how often does target network get updated? (in terms of episo
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 10
+num_episodes = 50
 max_steps_per_episode = 1500
 
 def train(policy_net, target_net):
@@ -40,22 +40,12 @@ def train(policy_net, target_net):
 		tempMemory = dqn.ReplayMemory(per_game_memory_size) #Create tempMemory for one match
 		
 
+		#Calculating available actions for just once, to initiate sequence
+		em.calculate_available_actions("white")
+		
 		for step in range(max_steps_per_episode):
 			state = em.get_state()	#get the BitVectorBoard state from the environment as a tensor 
-
-			checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("white")
-			em.available_actions.clear()
-			if len(em.calculate_available_actions("white", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
-				terminal = True
-				if checkedby == 0:
-					print("Stalemate!")
-					drawByStaleMate += 1
-					um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
-				else:
-					print("Black wins!")
-					blackWins += 1
-					um.place_rewards(tempMemory, -1)	#Place -1 into the reward section of namedtuples in the tempMemory
-
+			
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal: 
 				em, action = mcts.initializeTree(em, "white", 1)	#white makes his move
@@ -67,26 +57,10 @@ def train(policy_net, target_net):
 				tempMemory.push(dqn.Experience(state, action, next_state, 0, False))
 				state = next_state
 
-			#Check if 20 moves rule satisfied
-			if not terminal and em.bitVectorBoard[108] > 20:
-				terminal = True
-				print("Draw by no progress!")
-				drawByNoProgress += 1
-				um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
-				
-
-			if not terminal: checkedby, checkDirectThreats, checkAllThreats = em.IsCheck("black")
-			if not terminal: em.available_actions.clear()
-			if not terminal and len(em.calculate_available_actions("black", False, checkedby, checkDirectThreats, checkAllThreats)) == 0:
-				terminal = True
-				if checkedby == 0:
-					print("Stalemate!")
-					drawByStaleMate += 1
-					um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
-				else:
-					print("White wins!")
-					whiteWins += 1
-					um.place_rewards(tempMemory, 1)	#Place 1 into the reward section of namedtuples in the tempMemory
+			#Check if game ends
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory)
+			#Check if game ends by no progress rule
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, True)
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
@@ -96,21 +70,11 @@ def train(policy_net, target_net):
 				next_state = next_state.unsqueeze(0)
 				tempMemory.push(dqn.Experience(state, action, next_state, 0, False))
 
-			#Check if 20 moves rule satisfied
-			if not terminal and em.bitVectorBoard[108] > 20:
-				terminal = True
-				print("Draw by no progress!")
-				drawByNoProgress += 1
-				um.place_rewards(tempMemory, 0)	#Place 0 into the reward section of namedtuples in the tempMemory
-				
-				
-				
-
-			'''enemyMove = ""
-			while len(enemyMove) != 4:
-				enemyMove = input("What's your move? Type it in that format: a1a2 which means move the piece in a1 to a2 (or capture)")
-			em.step(enemyMove)'''
-
+			#Check if game ends
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory)
+			#Check if game ends by no progress rule
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, True)
+			
 
 			'''raise ValueError('-----END OF MCTS-----')
 			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
@@ -190,7 +154,6 @@ def test(policy_net):
 		available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
 		action = agent.select_action(state, available_actions, policy_net, True)	#returns an action in tensor format
 		reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
-		print("Humanistic state: " + str(em.get_humanistic_state()))
 		steps += 1
 		if terminal:
 			print("End - Steps: " + str(steps))

@@ -22,7 +22,7 @@ class State():
 		self.BoardObject = BoardObject								# Minichess object
 		self.numberOfMoves = len(self.availableActions)
 		self.numberOfLeftMoves = len(self.leftActions)				#Number of moves that left to spawn a child
-		self.checkedby = 0							#How many checks that the player is facing?
+		self.checkedby = BoardObject.checkedby						#How many checks that the player is facing?
 		self.moveCount = 0							#How many moves played until reaching current state
 		self.color = color							# "white" or "black"
 		self.exclusive_board_string = ""  		
@@ -101,12 +101,11 @@ class State():
 		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
 		next.numberOfMoves = 0
 
-		checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
-		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, checkedby, checkDirectThreats, checkAllThreats)
+		next.checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
+		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
 		next.leftActions = deepcopy(next.availableActions)
 		next.numberOfMoves = len(next.availableActions)
 		next.numberOfLeftMoves = len(next.leftActions)
-		next.checkedby = checkedby
 
 		return next
 

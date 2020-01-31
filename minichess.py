@@ -1,4 +1,3 @@
-import numpy as np 
 import random
 from copy import copy, deepcopy
 import torch
@@ -78,6 +77,7 @@ class MiniChess():
 		self.WhitePieceList = [King("white", 5, 1), Pawn("white", 4, 0), Pawn("white", 4, 1), Pawn("white", 4, 2), Rook("white", 5, 0), Rook("white", 5, 2)]
 		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
 		self.available_actions = []
+		self.checkedby = 0
 		self.device = device
 
 	#Tahtayı başlangıç pozisyonuna getirir. Sonuç olarak, state number'ı döndürür.
@@ -156,6 +156,7 @@ class MiniChess():
 		self.WhitePieceList = [King("white", 5, 1), Pawn("white", 4, 0), Pawn("white", 4, 1), Pawn("white", 4, 2), Rook("white", 5, 0), Rook("white", 5, 2)]
 		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
 		self.available_actions = []
+		self.checkedby = 0
 		return None
 
 	#At the moment, runs for user movements. Engine moves use InitializeTree Function in mcts.py which returns best child(continuation) of given state
@@ -283,6 +284,8 @@ class MiniChess():
 			if friendlyList[0].BitonBoard == bit:
 				checkedBy += 1
 
+		self.checkedby = checkedBy
+
 		#We used threatedbits from checking squares to obtain how many checks, but we need to pass all threats in the end so we compute it.
 		return checkedBy, DirectThreatedBits, self.calculateThreatedSquares(color) + behindKingBit
 
@@ -338,17 +341,9 @@ class MiniChess():
 
 		return available_actions
 
-	#Tensor coming in, tensor coming out
-	def take_action(self, action):
-		reward, terminal = self.step(action.item())
-		return torch.from_numpy(np.array([reward], dtype=np.float32)).unsqueeze(0), terminal
-
 	def get_state(self):
 		#normalizedState = normalizer.normalize([self.X, self.Y])
 		return torch.tensor(self.bitVectorBoard, dtype=torch.float32)
-
-	def get_humanistic_state(self):
-		return [self.WhiteX, self.WhiteY]
 
 class King():
 	class_counter = 0
