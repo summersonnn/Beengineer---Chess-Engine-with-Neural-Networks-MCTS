@@ -48,7 +48,7 @@ def train(policy_net, target_net):
 			
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "white", 1)	#white makes his move
+				em, action = mcts.initializeTree(em, "white", 1, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
 
 				#We don't know what the reward will be until the game ends. So put 0 for now.
@@ -64,7 +64,7 @@ def train(policy_net, target_net):
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "black", 1)	#white makes his move
+				em, action = mcts.initializeTree(em, "black", 1, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				next_state = next_state.unsqueeze(0)
@@ -77,12 +77,7 @@ def train(policy_net, target_net):
 			
 
 			'''raise ValueError('-----END OF MCTS-----')
-			action = agent.select_action(state, available_actions, policy_net, False)	#returns an action in tensor format
-			reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
-			next_state = em.get_state()	#get the new state
-
-			
-
+		
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
 				experiences = memory.sample(batch_size)	#sample experiences from memory

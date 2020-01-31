@@ -86,7 +86,10 @@ class Agent():
 
 	def select_action(self, state, available_actions, policy_net, isTest):
 
-		if not isTest:
+		action = random.choice(available_actions) 
+		return torch.tensor([action]).to(self.device)
+		#FOR NOW, function body is commented out for testing
+		'''if not isTest:
 			rate = self.strategy.get_exploration_rate(self.current_step)
 			self.current_step += 1
 
@@ -106,7 +109,7 @@ class Agent():
 						tensor_from_net[max_index] = torch.tensor(-100)
 					else:
 						break
-				return max_index.unsqueeze_(0)
+				return max_index.unsqueeze_(0)'''
 
 	def tell_me_exploration_rate(self):	#debug function to observe exploration rate during training process
 		num = self.strategy.get_exploration_rate(self.current_step)

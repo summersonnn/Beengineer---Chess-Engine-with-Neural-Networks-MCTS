@@ -1,5 +1,5 @@
-﻿#!/usr/bin/env python
-import random
+﻿import random
+import torch
 import math
 import hashlib
 import argparse
@@ -33,23 +33,27 @@ class State():
 			for j in range(3):
 				self.exclusive_board_string += self.BoardObject.board[i][j]
 			
-	def next_state(self, forRollout=False):
+	#If runs for EXPANDING, action does not come as parameter since it will expanded fully, in every possible way.
+	#If runs for ROLLOUT, action comes as parameter from rollout function
+	def next_state(self, action=0, forRollout=False):
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
-		nextActionToChoose = random.randint(0, self.numberOfLeftMoves - 1)
-		nextActionNumber = self.leftActions[nextActionToChoose] #e.g 145
-		next.createdByThisAction = nextActionNumber
 
+		#Selection action when expanding the tree.
 		#Decrementing number of left moves and deleting the action that is already used to spawned a child. 
-		#Original actions will be left in self.availableActions
+		#Original actions will be left in self.availableActions.
 		if not forRollout:
+			nextActionToChoose = random.randint(0, self.numberOfLeftMoves - 1)
+			action = self.leftActions[nextActionToChoose] #e.g 145
+			next.createdByThisAction = action
 			del self.leftActions[nextActionToChoose]
 			self.numberOfLeftMoves -= 1
 
+		#Converting action Scalar to String Format
 		inv_actions = {v: k for k, v in ad.actions.items()}
-		current_action = inv_actions[nextActionNumber]
+		current_action = inv_actions[action]
 		del inv_actions
-		
+
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = self.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
 		oldcoorBit = mic.coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
@@ -151,7 +155,7 @@ class Node():
 		
 
 	#Verilen süre içinde simülasyon ve backup yaparak node rewardlarını günceller. Süre sonunda en iyi child döner.
-	def UCTSEARCH(self, root, timeout):
+	def UCTSEARCH(self, root, policy_net, agent, timeout):
 		timeout_start = time.time()
 
 		while time.time() < timeout_start + timeout:
@@ -160,7 +164,7 @@ class Node():
 			if (afterTraverse.visits != 0 or afterTraverse == root) and not afterTraverse.state.terminal():
 				afterTraverse = self.EXPAND(afterTraverse)
 		
-			reward = self.ROLLOUT(afterTraverse.state)
+			reward = self.ROLLOUT(afterTraverse.state, policy_net, agent)
 			self.BACKUP(afterTraverse,reward)
 		return self.BESTCHILD(root,0)
 
@@ -206,9 +210,12 @@ class Node():
 			print("OOPS: no best child found, probably fatal")
 		return random.choice(bestchildren)
 
-	def ROLLOUT(self, state):
+	def ROLLOUT(self, state, policy_net, agent):
 		while state.terminal()==False:
-			state=state.next_state(True)
+			stateTensor = state.BoardObject.get_state()
+			action = agent.select_action(stateTensor, state.availableActions, policy_net, False)
+			action = action.item()
+			state = state.next_state(action, True)
 		return state.reward()
 
 	def BACKUP(self, node, reward):
@@ -218,11 +225,11 @@ class Node():
 			node=node.parent
 		return
 
-def initializeTree(boardobject, color, timeout):
+def initializeTree(boardobject, color, timeout, policy_net, agent, device):
 	root = Node(State(boardobject, color))
 	root.state.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
 
-	result = root.UCTSEARCH(root, timeout)
+	result = root.UCTSEARCH(root, policy_net, agent, timeout)
 	
 	root = result
-	return root.state.BoardObject, root.state.createdByThisAction
+	return root.state.BoardObject, torch.tensor([root.state.createdByThisAction]).to(device)
