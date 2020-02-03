@@ -13,7 +13,7 @@ import mcts
 
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 256 
+batch_size = 64 
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
@@ -22,7 +22,7 @@ target_update = 5	#how often does target network get updated? (in terms of episo
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 50
+num_episodes = 10
 max_steps_per_episode = 1500
 
 def train(policy_net, target_net):
@@ -33,7 +33,7 @@ def train(policy_net, target_net):
 	global loss
 	global em
 
-	for episode in range(past_episodes, num_episodes + past_episodes):
+	for episode in range(past_episodes + 1, num_episodes + past_episodes + 1):
 		print("Episode number: " + str(episode))
 		terminal = False
 		em.reset()	#reset the environment to start all over again
@@ -43,7 +43,7 @@ def train(policy_net, target_net):
 		#Calculating available actions for just once, to initiate sequence
 		em.calculate_available_actions("white")
 		
-		for step in range(max_steps_per_episode):
+		for step in range(1, max_steps_per_episode + 1):
 			state = em.get_state()	#get the BitVectorBoard state from the environment as a tensor 
 			
 			#If the game didn't end with the last move, now it's white's turn to move
@@ -76,12 +76,10 @@ def train(policy_net, target_net):
 			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, True)
 			
 
-			'''raise ValueError('-----END OF MCTS-----')
-		
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
 				experiences = memory.sample(batch_size)	#sample experiences from memory
-				states, actions, rewards, next_states = unrelatedmethods.extract_tensors(experiences)	#extract them
+				states, actions, rewards, next_states = um.extract_tensors(experiences)	#extract them
 
 				#get the current q values to calculate loss afterwards
 				current_q_values = policy_net(states).gather(dim=-1, index=actions.unsqueeze(-1))
@@ -104,7 +102,6 @@ def train(policy_net, target_net):
 				loss.backward()
 				optimizer.step()	#take a step based on the gradients
 
-			state = next_state.squeeze(0) #go to next state which we calculated earlier
 
 			#If we're in a terminal state, we never step in the terminal state. We end the episode instead.
 			#Record the step number.'''
@@ -122,7 +119,7 @@ def train(policy_net, target_net):
 
 		#Update target network with weights and biases in the policy network
 		#Also create new model files
-		'''if( episode % target_update == 0 ):
+		if episode % target_update == 0:
 			target_net.load_state_dict(policy_net.state_dict())
 			torch.save({ 'episode': episode,
 	            		'model_state_dict': policy_net.state_dict(),
@@ -130,7 +127,7 @@ def train(policy_net, target_net):
 	            		'loss': loss,
 	            		'current_step': agent.current_step }, PATH_TO_DIRECTORY + "MiniChess-trained-model" + str(episode) + ".tar"
 						)
-			print("Episode:" + str(episode) + " -------Weights are updated!")'''
+			print("Episode:" + str(episode) + " -------Weights are updated!")
 
 	print("\n")
 	print("White Wins: " + str(whiteWins))	
