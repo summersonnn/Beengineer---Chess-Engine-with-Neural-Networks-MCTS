@@ -84,12 +84,12 @@ class Agent():
 		self.strategy = strategy #EpsilonGreedyStrategy object
 		self.device = device
 
-	def select_action(self, state, available_actions, policy_net, isTest):
+	def select_action(self, state, available_actions, policy_net, isTest=False):
+		if len(available_actions) == 0:
+			raise ValueError("Error")
 
-		action = random.choice(available_actions) 
-		return torch.tensor([action]).to(self.device)
-		#FOR NOW, function body is commented out for testing
-		'''if not isTest:
+		#In Training, get the exploration ratio
+		if not isTest:
 			rate = self.strategy.get_exploration_rate(self.current_step)
 			self.current_step += 1
 
@@ -106,10 +106,10 @@ class Agent():
 					max_index = tensor_from_net.argmax()	#Index of max item is obtained
 					#If illegal move is given as output by the model, punish that action and make it select an action again.
 					if max_index.item() not in available_actions:
-						tensor_from_net[max_index] = torch.tensor(-100)
+						tensor_from_net[max_index] = torch.add(tensor_from_net[max_index], -100)
 					else:
 						break
-				return max_index.unsqueeze_(0)'''
+				return max_index.unsqueeze_(0)
 
 	def tell_me_exploration_rate(self):	#debug function to observe exploration rate during training process
 		num = self.strategy.get_exploration_rate(self.current_step)

@@ -17,13 +17,14 @@ batch_size = 64
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
-eps_decay = 0.001 #higher decay means faster reduction of exploration rate
+eps_decay = 0.00001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 10
+num_episodes = 20
 max_steps_per_episode = 1500
+move_time = 1	#Thinking time of a player
 
 def train(policy_net, target_net):
 	whiteWins = 0
@@ -35,6 +36,7 @@ def train(policy_net, target_net):
 
 	for episode in range(past_episodes + 1, num_episodes + past_episodes + 1):
 		print("Episode number: " + str(episode))
+		print("Exploration Rate: " + agent.tell_me_exploration_rate())
 		terminal = False
 		em.reset()	#reset the environment to start all over again
 		tempMemory = dqn.ReplayMemory(per_game_memory_size) #Create tempMemory for one match
@@ -48,7 +50,7 @@ def train(policy_net, target_net):
 			
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "white", 1, policy_net, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "white", move_time, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
 
 				#We don't know what the reward will be until the game ends. So put 0 for now.
@@ -64,7 +66,7 @@ def train(policy_net, target_net):
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "black", 1, policy_net, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "black", move_time, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				next_state = next_state.unsqueeze(0)
@@ -140,19 +142,62 @@ def train(policy_net, target_net):
 	return None
 
 def test(policy_net):
-	state = em.get_state()	#get the first state from the environment as a tensor
-	steps = 0
-	while True:
-		available_actions = em.calculate_available_actions()	#Deciding the possible actions. Illegal actions are not taken into account
-		action = agent.select_action(state, available_actions, policy_net, True)	#returns an action in tensor format
-		reward, terminal = em.take_action(action)	#returns reward and terminal state info in tensor format
-		steps += 1
-		if terminal:
-			print("End - Steps: " + str(steps))
-			break;
-		next_state = em.get_state()	#get the new state 
-		state = next_state
+	whiteWins = 0
+	blackWins = 0
+	drawByNoProgress = 0
+	drawByStaleMate = 0
+	global em
+
+	for episode in range(1, num_episodes + 1):
+		print("\nMatch number: " + str(episode))
+		terminal = False
+		em.reset()	#reset the environment to start all over again
+		
+		#Calculating available actions for just once, to initiate sequence
+		em.calculate_available_actions("white")
+		
+		for step in range(1, max_steps_per_episode + 1):
+			state = em.get_state()	#get the BitVectorBoard state from the environment as a tensor 
+			
+			#If the game didn't end with the last move, now it's white's turn to move
+			if not terminal: 
+				em, action = mcts.initializeTree(em, "white", move_time, policy_net, agent, device)	#white makes his move
+				next_state = em.get_state()
+
+				#We don't know what the reward will be until the game ends. So put 0 for now.
+				state = state.unsqueeze(0)
+				next_state = next_state.unsqueeze(0)
+				state = next_state
+
+			#Check if game ends
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None)
+			#Check if game ends by no progress rule
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None, True)
+				
+			#If the game didn't end with the last move, now it's black's turn to move
+			if not terminal: 
+				em, action = mcts.initializeTree(em, "black", move_time, policy_net, agent, device)	#white makes his move
+				next_state = em.get_state()
+				#We don't know what the reward will be until the game ends. So put 0 for now.
+				next_state = next_state.unsqueeze(0)
+
+			#Check if game ends
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None)
+			#Check if game ends by no progress rule
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None, True)
+		
+			if terminal:
+				break 
+
+
+	print("\n")
+	print("White Wins: " + str(whiteWins))	
+	print("Black Wins: " + str(blackWins))	
+	print("Draw By No Progress: " + str(drawByNoProgress))	
+	print("Draw By Stalemate: " + str(drawByStaleMate))
+	print("\n")
 	return None
+
 
 if __name__ == '__main__':
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

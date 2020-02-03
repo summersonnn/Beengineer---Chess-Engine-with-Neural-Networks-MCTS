@@ -3,7 +3,7 @@ import torch
 import math
 import hashlib
 import argparse
-import time
+import datetime
 import minichess as mic
 import actionsdefined as ad
 from copy import copy, deepcopy
@@ -13,8 +13,10 @@ from copy import copy, deepcopy
 SCALAR=2
 EXPAND_NUMBER = 3
 
+
 class State():
-	
+	node_count = 0
+
 	def __init__(self, BoardObject, color):
 		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
 		self.leftActions = deepcopy(BoardObject.available_actions)	#Actions that are not used to spawn a child. Initialized same as avActs but will be changed when a child is spawned
@@ -36,6 +38,7 @@ class State():
 	#If runs for EXPANDING, action does not come as parameter since it will expanded fully, in every possible way.
 	#If runs for ROLLOUT, action comes as parameter from rollout function
 	def next_state(self, action=0, forRollout=False):
+		State.node_count += 1
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
 
@@ -156,14 +159,18 @@ class Node():
 
 	#Verilen süre içinde simülasyon ve backup yaparak node rewardlarını günceller. Süre sonunda en iyi child döner.
 	def UCTSEARCH(self, root, policy_net, agent, timeout):
-		timeout_start = time.time()
+		timeout_start = datetime.datetime.now()
 
-		while time.time() < timeout_start + timeout:
+		while True:
+			diff = datetime.datetime.now() - timeout_start
+			if diff.total_seconds() >= timeout:
+				break
+
 			afterTraverse=self.TRAVERSAL(root)
 			#First condition was to be able to expand the ROOT node but not other visit=0 nodes, second was to enable zero-move ROLLOUT for terminal leafs
 			if (afterTraverse.visits != 0 or afterTraverse == root) and not afterTraverse.state.terminal():
 				afterTraverse = self.EXPAND(afterTraverse)
-		
+
 			reward = self.ROLLOUT(afterTraverse.state, policy_net, agent)
 			self.BACKUP(afterTraverse,reward)
 		return self.BESTCHILD(root,0)
@@ -213,7 +220,13 @@ class Node():
 	def ROLLOUT(self, state, policy_net, agent):
 		while state.terminal()==False:
 			stateTensor = state.BoardObject.get_state()
-			action = agent.select_action(stateTensor, state.availableActions, policy_net, False)
+
+			#action = state.availableActions[0]
+			#If strategy is not None, it's Training, if it is None, it's Testing
+			if agent.strategy != None:
+				action = agent.select_action(stateTensor, state.availableActions, policy_net, False)
+			else:
+				action = agent.select_action(stateTensor, state.availableActions, policy_net, True)
 			action = action.item()
 			state = state.next_state(action, True)
 		return state.reward()
@@ -232,4 +245,10 @@ def initializeTree(boardobject, color, timeout, policy_net, agent, device):
 	result = root.UCTSEARCH(root, policy_net, agent, timeout)
 	
 	root = result
+	#print("Node Count: " + str(State.node_count))
+	'''totalvisits = 0
+	for c in root.parent.children:
+		totalvisits += c.visits
+	print("Total Visits: " + str(totalvisits))'''
+
 	return root.state.BoardObject, torch.tensor([root.state.createdByThisAction]).to(device)
