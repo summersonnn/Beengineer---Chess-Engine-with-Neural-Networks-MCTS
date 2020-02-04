@@ -14,6 +14,7 @@ SCALAR=2
 EXPAND_NUMBER = 3
 
 
+
 class State():
 	node_count = 0
 
@@ -173,6 +174,7 @@ class Node():
 
 			reward = self.ROLLOUT(afterTraverse.state, policy_net, agent)
 			self.BACKUP(afterTraverse,reward)
+
 		return self.BESTCHILD(root,0)
 
 	#Sürekli best child'ı seçerek leaf node'a ulaştırır. Buradan ilerde ya expand edilecek ya rollout yapılacak.
@@ -221,13 +223,14 @@ class Node():
 		while state.terminal()==False:
 			stateTensor = state.BoardObject.get_state()
 
-			#action = state.availableActions[0]
+			action = state.availableActions[0]
 			#If strategy is not None, it's Training, if it is None, it's Testing
-			if agent.strategy != None:
+			'''if agent.strategy != None:
 				action = agent.select_action(stateTensor, state.availableActions, policy_net, False)
 			else:
 				action = agent.select_action(stateTensor, state.availableActions, policy_net, True)
-			action = action.item()
+			
+			action = action.item()'''
 			state = state.next_state(action, True)
 		return state.reward()
 

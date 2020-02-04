@@ -22,9 +22,8 @@ target_update = 5	#how often does target network get updated? (in terms of episo
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 20
-max_steps_per_episode = 1500
-move_time = 1	#Thinking time of a player
+num_episodes = 5
+move_time = 0.2	#Thinking time of a player
 
 def train(policy_net, target_net):
 	whiteWins = 0
@@ -45,7 +44,7 @@ def train(policy_net, target_net):
 		#Calculating available actions for just once, to initiate sequence
 		em.calculate_available_actions("white")
 		
-		for step in range(1, max_steps_per_episode + 1):
+		while True:
 			state = em.get_state()	#get the BitVectorBoard state from the environment as a tensor 
 			
 			#If the game didn't end with the last move, now it's white's turn to move
@@ -108,8 +107,6 @@ def train(policy_net, target_net):
 			#If we're in a terminal state, we never step in the terminal state. We end the episode instead.
 			#Record the step number.'''
 			if terminal:
-				print("Terminal!\n")
-
 				#Editing the last memory, so that its terminal value is True
 				tempMemory.memory[-1] = tempMemory.memory[-1]._replace(terminal = True)	
 
@@ -156,7 +153,7 @@ def test(policy_net):
 		#Calculating available actions for just once, to initiate sequence
 		em.calculate_available_actions("white")
 		
-		for step in range(1, max_steps_per_episode + 1):
+		while True:
 			state = em.get_state()	#get the BitVectorBoard state from the environment as a tensor 
 			
 			#If the game didn't end with the last move, now it's white's turn to move

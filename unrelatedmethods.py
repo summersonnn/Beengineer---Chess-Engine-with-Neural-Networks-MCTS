@@ -25,17 +25,17 @@ def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoPr
 		if not terminal and len(em.available_actions) == 0:
 			terminal = True
 			if em.checkedby == 0:
-				print("Stalemate!")
+				print("Stalemate!\n")
 				drawByStaleMate += 1
 				if tempMemory != None:
 					place_rewards(tempMemory, 0)  	#Place 0 into the reward section of namedtuples in the tempMemory if it's training
 			elif color == "white":
-				print("Black wins!")
+				print("Black wins!\n")
 				blackWins += 1
 				if tempMemory != None:
 					place_rewards(tempMemory, -1)  	#Place -1 into the reward section of namedtuples in the tempMemory if it's training
 			else:
-				print("White wins!")
+				print("White wins!\n")
 				whiteWins += 1
 				if tempMemory != None:
 					place_rewards(tempMemory, 1)  	#Place 1 into the reward section of namedtuples in the tempMemory if it's training
@@ -43,7 +43,7 @@ def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoPr
 	else:
 		if not terminal and em.bitVectorBoard[108] > 20:
 			terminal = True
-			print("Draw by no progress!")
+			print("Draw by no progress!\n")
 			drawByNoProgress += 1
 			if tempMemory != None:
 					place_rewards(tempMemory, 0)  	#Place 0 into the reward section of namedtuples in the tempMemory if it's training
