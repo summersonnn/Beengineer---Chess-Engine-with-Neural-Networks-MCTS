@@ -144,6 +144,7 @@ class State():
 		return self.board.print()	
 
 class Node():
+
 	def __init__(self, state, parent=None):
 		self.visits=0
 		self.reward=0.0	
@@ -160,9 +161,12 @@ class Node():
 
 	#Verilen süre içinde simülasyon ve backup yaparak node rewardlarını günceller. Süre sonunda en iyi child döner.
 	def UCTSEARCH(self, root, policy_net, agent, timeout):
-		timeout_start = datetime.datetime.now()
+		total = 0
+		counter = 0
 
+		timeout_start = datetime.datetime.now()
 		while True:
+			#start = datetime.datetime.now()
 			diff = datetime.datetime.now() - timeout_start
 			if diff.total_seconds() >= timeout:
 				break
@@ -175,6 +179,11 @@ class Node():
 			reward = self.ROLLOUT(afterTraverse.state, policy_net, agent)
 			self.BACKUP(afterTraverse,reward)
 
+			'''end = datetime.datetime.now()
+			total += (end - start).microseconds
+			counter += 1'''
+
+		#print(total/counter)
 		return self.BESTCHILD(root,0)
 
 	#Sürekli best child'ı seçerek leaf node'a ulaştırır. Buradan ilerde ya expand edilecek ya rollout yapılacak.
@@ -198,26 +207,25 @@ class Node():
 	#If black, lower score means better child.
 	def BESTCHILD(self, node,scalar):
 		bestscore=-1000 if node.state.color == "white" else 1000
-		bestchildren=[]
+		bestchildren = None
 
 		for c in node.children:
 			if c.visits == 0:
-				score = 100 if node.state.color == "white" else -100
+				return c
 			else:
 				exploit=c.reward/c.visits
 				explore=math.sqrt(math.log(node.visits)/float(c.visits))	
 				score=exploit+scalar*explore
-			if score==bestscore:
-				bestchildren.append(c)
-			if score > bestscore and node.state.color == "white":
-				bestchildren=[c]
-				bestscore=score
-			elif score < bestscore and node.state.color =="black":
-				bestchildren=[c]
-				bestscore=score
-		if len(bestchildren)==0:
+
+			if score >= bestscore and node.state.color == "white":
+				bestchildren = c
+				bestscore = score
+			elif score <= bestscore and node.state.color =="black":
+				bestchildren = c
+				bestscore = score
+		if bestchildren == None:
 			print("OOPS: no best child found, probably fatal")
-		return random.choice(bestchildren)
+		return bestchildren
 
 	def ROLLOUT(self, state, policy_net, agent):
 		while state.terminal()==False:
@@ -246,7 +254,6 @@ def initializeTree(boardobject, color, timeout, policy_net, agent, device):
 	root.state.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
 
 	result = root.UCTSEARCH(root, policy_net, agent, timeout)
-	
 	root = result
 	#print("Node Count: " + str(State.node_count))
 	'''totalvisits = 0
