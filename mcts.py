@@ -194,12 +194,9 @@ class Node():
 	 
 	#Leaf node expand ettirir.
 	def EXPAND(self, node):
-
 		for i in range(node.state.numberOfMoves):
-			tried_children=[c.state for c in node.children]
 			new_state=node.state.next_state()
 			node.add_child(new_state)
-			tried_children += [new_state]
 		return node.children[-1]
 
 	#Score for childs are calculated according to color of current node. Because rewards were calculated according to color. 
