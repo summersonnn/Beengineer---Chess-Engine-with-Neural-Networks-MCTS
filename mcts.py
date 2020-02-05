@@ -24,17 +24,14 @@ class State():
 		self.createdByThisAction = 0								#Tells which action resulted in this state
 		self.BoardObject = BoardObject								# Minichess object
 		self.numberOfMoves = len(self.availableActions)
-		self.numberOfLeftMoves = len(self.leftActions)				#Number of moves that left to spawn a child
 		self.checkedby = BoardObject.checkedby						#How many checks that the player is facing?
-		self.moveCount = 0							#How many moves played until reaching current state
 		self.color = color							# "white" or "black"
 		self.exclusive_board_string = ""  		
 
 	def build_exclusive_string(self):
 		self.exclusive_board_string =""
-		for i in range(6):
-			for j in range(3):
-				self.exclusive_board_string += self.BoardObject.board[i][j]
+		for i in range(109):
+			self.exclusive_board_string += str(self.BoardObject.bitVectorBoard[i])
 			
 	#If runs for EXPANDING, action does not come as parameter since it will expanded fully, in every possible way.
 	#If runs for ROLLOUT, action comes as parameter from rollout function
@@ -44,14 +41,12 @@ class State():
 		next.color = "white" if self.color == "black" else "black"
 
 		#Selection action when expanding the tree.
-		#Decrementing number of left moves and deleting the action that is already used to spawned a child. 
+		#Deleting the action that is already used to spawned a child. 
 		#Original actions will be left in self.availableActions.
 		if not forRollout:
-			nextActionToChoose = random.randint(0, self.numberOfLeftMoves - 1)
-			action = self.leftActions[nextActionToChoose] #e.g 145
+			action = self.leftActions[0] #e.g 145
 			next.createdByThisAction = action
-			del self.leftActions[nextActionToChoose]
-			self.numberOfLeftMoves -= 1
+			del self.leftActions[0]
 
 		#Converting action Scalar to String Format
 		inv_actions = {v: k for k, v in ad.actions.items()}
@@ -105,15 +100,12 @@ class State():
 			next.BoardObject.removeCapturedPiece(oldcoorBit, friendList)
 
 		next.build_exclusive_string()	#New exclusive string is constructed, ready for being hashed
-		next.moveCount += 1	#In the new node, movecount will be one more
 		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
-		next.numberOfMoves = 0
-
+		
 		next.checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
 		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
 		next.leftActions = deepcopy(next.availableActions)
 		next.numberOfMoves = len(next.availableActions)
-		next.numberOfLeftMoves = len(next.leftActions)
 
 		return next
 
