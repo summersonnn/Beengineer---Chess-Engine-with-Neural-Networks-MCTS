@@ -99,10 +99,9 @@ class State():
 			next.BoardObject.removeCapturedPiece(oldcoorBit, friendList)
 
 		next.build_exclusive_string()	#New exclusive string is constructed, ready for being hashed
-		next.availableActions.clear()	#In the new node, we don't need the parent's available actions as they can be no longer valid actions
 		
 		next.checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
-		next.availableActions = next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
+		next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
 		next.leftActions = deepcopy(next.availableActions)
 		next.numberOfMoves = len(next.availableActions)
 

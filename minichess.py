@@ -309,6 +309,7 @@ class MiniChess():
 	#checkRookThreats is the threats from enemy Rook piece that provide checks, we will look at these bits to destroy the check
 	#checkAllThreats is all threats from enemy pieces
 	def calculate_available_actions(self, forColor, IsForCalculatingThreats=False, checkedBy=0, checkRookThreats=None, checkAllThreats=None):
+		self.available_actions.clear()
 		available_actions = []
 		ThreatedSquares = []
 
