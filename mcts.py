@@ -16,6 +16,7 @@ EXPAND_NUMBER = 3
 
 
 class State():
+	inv_actions = {v: k for k, v in ad.actions.items()}
 	node_count = 0
 
 	def __init__(self, BoardObject, color):
@@ -25,7 +26,7 @@ class State():
 		self.BoardObject = BoardObject								# Minichess object
 		self.numberOfMoves = len(self.availableActions)
 		self.checkedby = BoardObject.checkedby						#How many checks that the player is facing?
-		self.color = color							# "white" or "black"
+		self.color = color											# "white" or "black"
 		self.exclusive_board_string = ""  		
 
 	def build_exclusive_string(self):
@@ -49,9 +50,7 @@ class State():
 			del self.leftActions[0]
 
 		#Converting action Scalar to String Format
-		inv_actions = {v: k for k, v in ad.actions.items()}
-		current_action = inv_actions[action]
-		del inv_actions
+		current_action = State.inv_actions[action]
 
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = self.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
@@ -244,6 +243,7 @@ def initializeTree(boardobject, color, timeout, policy_net, agent, device):
 
 	result = root.UCTSEARCH(root, policy_net, agent, timeout)
 	root = result
+	#print("Node: " + str(State.node_count) +  " Average: " + str(State.time / State.node_count))
 	#print("Node Count: " + str(State.node_count))
 	'''totalvisits = 0
 	for c in root.parent.children:
