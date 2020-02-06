@@ -149,10 +149,7 @@ class Node():
 		
 
 	#Verilen süre içinde simülasyon ve backup yaparak node rewardlarını günceller. Süre sonunda en iyi child döner.
-	def UCTSEARCH(self, root, policy_net, agent, timeout):
-		total = 0
-		counter = 0
-
+	def UCTSEARCH(self, root, episode, policy_net, agent, timeout):
 		timeout_start = datetime.datetime.now()
 		while True:
 			#start = datetime.datetime.now()
@@ -165,14 +162,8 @@ class Node():
 			if (afterTraverse.visits != 0 or afterTraverse == root) and not afterTraverse.state.terminal():
 				afterTraverse = self.EXPAND(afterTraverse)
 
-			reward = self.ROLLOUT(afterTraverse.state, policy_net, agent)
+			reward = self.ROLLOUT(afterTraverse.state, episode, policy_net, agent)
 			self.BACKUP(afterTraverse,reward)
-
-			'''end = datetime.datetime.now()
-			total += (end - start).microseconds
-			counter += 1'''
-
-		#print(total/counter)
 		return self.BESTCHILD(root,0)
 
 	#Sürekli best child'ı seçerek leaf node'a ulaştırır. Buradan ilerde ya expand edilecek ya rollout yapılacak.
@@ -213,19 +204,19 @@ class Node():
 			print("OOPS: no best child found, probably fatal")
 		return bestchildren
 
-	def ROLLOUT(self, state, policy_net, agent):
+	def ROLLOUT(self, state, episode, policy_net, agent):
 		while state.terminal()==False:
 			stateTensor = state.BoardObject.get_state()
 
-			randomIndex = random.randrange(0, state.numberOfMoves)
-			action = state.BoardObject.available_actions[randomIndex]
+			#randomIndex = random.randrange(0, state.numberOfMoves)
+			#action = state.BoardObject.available_actions[randomIndex]
 			#If strategy is not None, it's Training, if it is None, it's Testing
-			'''if agent.strategy != None:
-				action = agent.select_action(stateTensor, state.availableActions, policy_net, False)
+			if agent.strategy != None:
+				action = agent.select_action(stateTensor, state.BoardObject.available_actions, episode, policy_net, False)
 			else:
-				action = agent.select_action(stateTensor, state.availableActions, policy_net, True)
+				action = agent.select_action(stateTensor, state.BoardObject.available_actions, episode, policy_net, True)
 			
-			action = action.item()'''
+			action = action.item()
 			state = state.next_state(action, True)
 		return state.reward()
 
@@ -236,17 +227,15 @@ class Node():
 			node=node.parent
 		return
 
-def initializeTree(boardobject, color, timeout, policy_net, agent, device):
+def initializeTree(boardobject, color, timeout, episode, policy_net, agent, device):
 	root = Node(State(boardobject, color))
 	root.state.build_exclusive_string()	#exclusive string for root is constructed (for hashing)
 
-	result = root.UCTSEARCH(root, policy_net, agent, timeout)
+	result = root.UCTSEARCH(root, episode, policy_net, agent, timeout)
 	root = result
-	#print("Node: " + str(State.node_count) +  " Average: " + str(State.time / State.node_count))
-	#print("Node Count: " + str(State.node_count))
-	'''totalvisits = 0
-	for c in root.parent.children:
-		totalvisits += c.visits
-	print("Total Visits: " + str(totalvisits))'''
+	
+
+
+
 
 	return root.state.BoardObject, torch.tensor([root.state.createdByThisAction]).to(device)

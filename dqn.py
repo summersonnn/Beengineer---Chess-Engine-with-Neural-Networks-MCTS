@@ -84,14 +84,15 @@ class Agent():
 		self.strategy = strategy #EpsilonGreedyStrategy object
 		self.device = device
 
-	def select_action(self, state, available_actions, policy_net, isTest=False):
+	def select_action(self, state, available_actions, episode, policy_net, isTest=False):
 		if len(available_actions) == 0:
 			raise ValueError("Error")
 
 		#In Training, get the exploration ratio
 		if not isTest:
+			self.current_step = episode
 			rate = self.strategy.get_exploration_rate(self.current_step)
-			self.current_step += 1
+			
 
 		#Explore
 		if not isTest and rate > random.random():

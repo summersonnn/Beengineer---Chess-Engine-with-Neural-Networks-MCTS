@@ -11,18 +11,17 @@ import unrelatedmethods as um
 import fileoperations
 import mcts
 
-
 PATH_TO_DIRECTORY = "pretrained_model/"
 batch_size = 64 
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
-eps_decay = 0.00001 #higher decay means faster reduction of exploration rate
+eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 100
+num_episodes = 50
 move_time = 0.5	#Thinking time of a player
 
 def train(policy_net, target_net):
@@ -49,7 +48,7 @@ def train(policy_net, target_net):
 			
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "white", move_time, policy_net, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
 
 				#We don't know what the reward will be until the game ends. So put 0 for now.
@@ -62,10 +61,10 @@ def train(policy_net, target_net):
 			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory)
 			#Check if game ends by no progress rule
 			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, True)
-				
+			
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "black", move_time, policy_net, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				next_state = next_state.unsqueeze(0)
@@ -76,7 +75,6 @@ def train(policy_net, target_net):
 			#Check if game ends by no progress rule
 			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, True)
 			
-
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
 				experiences = memory.sample(batch_size)	#sample experiences from memory
