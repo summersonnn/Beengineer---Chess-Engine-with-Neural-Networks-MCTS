@@ -218,7 +218,8 @@ class Node():
 		while state.terminal()==False:
 			stateTensor = state.BoardObject.get_state()
 
-			action = state.availableActions[0]
+			randomIndex = random.randrange(0, state.numberOfMoves)
+			action = state.availableActions[randomIndex]
 			#If strategy is not None, it's Training, if it is None, it's Testing
 			'''if agent.strategy != None:
 				action = agent.select_action(stateTensor, state.availableActions, policy_net, False)
