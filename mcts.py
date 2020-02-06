@@ -20,11 +20,10 @@ class State():
 	node_count = 0
 
 	def __init__(self, BoardObject, color):
-		self.availableActions = BoardObject.available_actions		# e.g Kg3, Ra4
 		self.leftActions = deepcopy(BoardObject.available_actions)	#Actions that are not used to spawn a child. Initialized same as avActs but will be changed when a child is spawned
 		self.createdByThisAction = 0								#Tells which action resulted in this state
 		self.BoardObject = BoardObject								# Minichess object
-		self.numberOfMoves = len(self.availableActions)
+		self.numberOfMoves = len(self.BoardObject.available_actions)
 		self.checkedby = BoardObject.checkedby						#How many checks that the player is facing?
 		self.color = color											# "white" or "black"
 		self.exclusive_board_string = ""  		
@@ -102,8 +101,8 @@ class State():
 		
 		next.checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
 		next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
-		next.leftActions = deepcopy(next.availableActions)
-		next.numberOfMoves = len(next.availableActions)
+		next.leftActions = deepcopy(next.BoardObject.available_actions)
+		next.numberOfMoves = len(next.leftActions)
 
 		return next
 
@@ -219,7 +218,7 @@ class Node():
 			stateTensor = state.BoardObject.get_state()
 
 			randomIndex = random.randrange(0, state.numberOfMoves)
-			action = state.availableActions[randomIndex]
+			action = state.BoardObject.available_actions[randomIndex]
 			#If strategy is not None, it's Training, if it is None, it's Testing
 			'''if agent.strategy != None:
 				action = agent.select_action(stateTensor, state.availableActions, policy_net, False)
