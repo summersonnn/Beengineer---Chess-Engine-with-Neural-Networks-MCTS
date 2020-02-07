@@ -171,7 +171,7 @@ def test(policy_net):
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "black", move_time, policy_net, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				next_state = next_state.unsqueeze(0)
