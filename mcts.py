@@ -219,8 +219,8 @@ class Node():
 				start = datetime.datetime.now()
 				action = agent.select_action(stateTensor, state.BoardObject.available_actions, episode, policy_net, True)
 				diff = datetime.datetime.now() - start
-				Node.rollout_time += diff.total_seconds()
-				Node.rollout_counter += 1
+				#Node.rollout_time += diff.total_seconds()
+				#Node.rollout_counter += 1
 			
 			action = action.item()
 			state = state.next_state(action, True)
@@ -240,7 +240,7 @@ def initializeTree(boardobject, color, timeout, episode, policy_net, agent, devi
 	result = root.UCTSEARCH(root, episode, policy_net, agent, timeout)
 	root = result
 	
-	print("Avg time lost in NN: " + str(Node.rollout_time/Node.rollout_counter))
+	#print("Avg time lost in NN: " + str(Node.rollout_time/Node.rollout_counter))
 
 
 

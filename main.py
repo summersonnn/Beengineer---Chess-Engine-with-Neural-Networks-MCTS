@@ -21,7 +21,7 @@ target_update = 5	#how often does target network get updated? (in terms of episo
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 1
+num_episodes = 10
 move_time = 0.5	#Thinking time of a player
 
 def train(policy_net, target_net):

@@ -102,13 +102,13 @@ class Agent():
 		#Exploit
 		else:
 			with torch.no_grad():
-				tensor_from_net = policy_net(state).to(self.device)
-				while (True):
-					max_index = tensor_from_net.argmax()	#Index of max item is obtained
+				tensor_from_net = policy_net(state).to(self.device)		#Got output from model
+				indices = torch.topk(tensor_from_net, len(tensor_from_net))[1]			#Indexes of the biggest items are sorted
+
+				for i in range(len(indices)):
+					max_index = indices[i]
 					#If illegal move is given as output by the model, punish that action and make it select an action again.
-					if max_index.item() not in available_actions:
-						tensor_from_net[max_index] = torch.add(tensor_from_net[max_index], -100)
-					else:
+					if max_index in available_actions:
 						break
 				return max_index.unsqueeze_(0)
 
