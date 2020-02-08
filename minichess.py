@@ -344,7 +344,7 @@ class MiniChess():
 
 	def get_state(self):
 		#normalizedState = normalizer.normalize([self.X, self.Y])
-		return torch.tensor(self.bitVectorBoard, dtype=torch.float32)
+		return torch.tensor(self.bitVectorBoard, dtype=torch.float32).to(self.device)
 
 class King():
 	class_counter = 0
