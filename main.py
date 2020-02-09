@@ -109,7 +109,7 @@ def train(policy_net, target_net):
 				tempMemory.memory[-1] = tempMemory.memory[-1]._replace(terminal = True)	
 
 				#Moving full tuples to big memory, and deleting the temp memory
-				memory.memory += tempMemory.memory
+				memory.memory.extend(tempMemory.memory)
 				memory.push_count += tempMemory.push_count
 				del tempMemory
 				break 
