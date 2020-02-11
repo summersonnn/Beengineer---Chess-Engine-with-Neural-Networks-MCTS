@@ -107,7 +107,7 @@ class State():
 		return next
 
 	def terminal(self):
-		if self.BoardObject.bitVectorBoard[108] > 20 or self.numberOfMoves == 0:
+		if self.BoardObject.bitVectorBoard[108] > 30 or self.numberOfMoves == 0:
 			return True
 		return False
 
@@ -118,7 +118,7 @@ class State():
 				reward = 0
 			else:
 				reward = 1 if self.color == "black" else -1
-		elif self.BoardObject.bitVectorBoard[108] > 20:
+		elif self.BoardObject.bitVectorBoard[108] > 30:
 			reward = 0
 
 		return reward

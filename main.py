@@ -17,13 +17,13 @@ batch_size = 64
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
-eps_decay = 0.001 #higher decay means faster reduction of exploration rate
+eps_decay = 0.01 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
 num_episodes = 1
-move_time = 0.1	#Thinking time of a player
+move_time = 0.3	#Thinking time of a player
 
 def train(policy_net, target_net):
 	whiteWins = 0
