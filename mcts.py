@@ -3,7 +3,7 @@ import torch
 import math
 import hashlib
 import argparse
-import datetime
+import timeit
 import minichess as mic
 import actionsdefined as ad
 from copy import copy, deepcopy
@@ -133,8 +133,6 @@ class State():
 		return self.board.print()	
 
 class Node():
-	rollout_time = 0
-	rollout_counter = 0
 
 	def __init__(self, state, parent=None):
 		self.visits=0
@@ -152,10 +150,12 @@ class Node():
 
 	#Verilen süre içinde simülasyon ve backup yaparak node rewardlarını günceller. Süre sonunda en iyi child döner.
 	def UCTSEARCH(self, root, episode, policy_net, agent, timeout):
-		timeout_start = datetime.datetime.now()
+		timeout_start = timeit.default_timer()
 		while True:
-			diff = datetime.datetime.now() - timeout_start
-			if diff.total_seconds() >= timeout:
+			nntime = 0
+			nncounter = 0
+			diff = timeit.default_timer() - timeout_start
+			if diff >= timeout:
 				break
 
 			afterTraverse=self.TRAVERSAL(root)
@@ -173,15 +173,16 @@ class Node():
 				if agent.strategy != None:
 					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, False)
 				else:
-					start = datetime.datetime.now()
+					start = timeit.default_timer()
 					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, True)
-					diff = datetime.datetime.now() - start
-					#print(diff.total_seconds())
-					#Node.rollout_time += diff.total_seconds()
-					#Node.rollout_counter += 1
+					diff = timeit.default_timer() - start
+					nntime += diff
+					nncounter += 1
+					
 				action = action.item()
 				traversedState = traversedState.next_state(action, True)
-			
+				
+			print("Avg time spent in NN: " + str(nntime / nncounter)) if nncounter > 0 else "gg"
 			reward = traversedState.reward()
 			self.BACKUP(afterTraverse,reward)
 		return self.BESTCHILD(root,0)
