@@ -154,7 +154,6 @@ class Node():
 	def UCTSEARCH(self, root, episode, policy_net, agent, timeout):
 		timeout_start = datetime.datetime.now()
 		while True:
-			#start = datetime.datetime.now()
 			diff = datetime.datetime.now() - timeout_start
 			if diff.total_seconds() >= timeout:
 				break
@@ -164,7 +163,26 @@ class Node():
 			if (afterTraverse.visits != 0 or afterTraverse == root) and not afterTraverse.state.terminal():
 				afterTraverse = self.EXPAND(afterTraverse)
 
-			reward = self.ROLLOUT(afterTraverse.state, episode, policy_net, agent)
+			#ROLLOUT
+			traversedState = afterTraverse.state
+			while traversedState.terminal()==False:
+				stateTensor = traversedState.BoardObject.get_state()
+				#randomIndex = random.randrange(0, traversedState.numberOfMoves)
+				#action = traversedState.BoardObject.available_actions[randomIndex]
+				#If strategy is not None, it's Training, if it is None, it's Testing
+				if agent.strategy != None:
+					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, False)
+				else:
+					start = datetime.datetime.now()
+					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, True)
+					diff = datetime.datetime.now() - start
+					#print(diff.total_seconds())
+					#Node.rollout_time += diff.total_seconds()
+					#Node.rollout_counter += 1
+				action = action.item()
+				traversedState = traversedState.next_state(action, True)
+			
+			reward = traversedState.reward()
 			self.BACKUP(afterTraverse,reward)
 		return self.BESTCHILD(root,0)
 
@@ -206,7 +224,7 @@ class Node():
 			print("OOPS: no best child found, probably fatal")
 		return bestchildren
 
-	def ROLLOUT(self, state, episode, policy_net, agent):
+	'''def ROLLOUT(self, state, episode, policy_net, agent):
 		while state.terminal()==False:
 			stateTensor = state.BoardObject.get_state()
 
@@ -224,7 +242,7 @@ class Node():
 			
 			action = action.item()
 			state = state.next_state(action, True)
-		return state.reward()
+		return state.reward()'''
 
 	def BACKUP(self, node, reward):
 		while node!=None:
