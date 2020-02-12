@@ -13,7 +13,7 @@ import mcts
 import datetime
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 64 
+batch_size = 512 
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.01	#minimum exploration rate
@@ -209,6 +209,7 @@ if __name__ == '__main__':
 		optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
 		target_net = dqn.DQN().to(device)
 		past_episodes = 0	#how many episode is played before? this variable may be changed in the upcoming if block.
+		loss = 0
 		
 		if last_trained_model is not None:
 			print("***Last trained model: " + last_trained_model)

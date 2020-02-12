@@ -13,8 +13,6 @@ from copy import copy, deepcopy
 SCALAR=2
 EXPAND_NUMBER = 3
 
-
-
 class State():
 	inv_actions = {v: k for k, v in ad.actions.items()}
 	node_count = 0
@@ -154,6 +152,7 @@ class Node():
 		while True:
 			nntime = 0
 			nncounter = 0
+
 			diff = timeit.default_timer() - timeout_start
 			if diff >= timeout:
 				break
@@ -173,13 +172,11 @@ class Node():
 				if agent.strategy != None:
 					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, False)
 				else:
-					start = timeit.default_timer()
-					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, True)
-					diff = timeit.default_timer() - start
+					action, diff = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, True)
 					nntime += diff
 					nncounter += 1
-					
-				action = action.item()
+
+				action = action[0].item()
 				traversedState = traversedState.next_state(action, True)
 				
 			print("Avg time spent in NN: " + str(nntime / nncounter)) if nncounter > 0 else "gg"
