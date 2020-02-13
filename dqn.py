@@ -4,7 +4,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np 
 import random
-import timeit
 import math
 from collections import namedtuple
 import minichess
@@ -102,7 +101,6 @@ class Agent():
 
 		#Exploit
 		else:
-			start = timeit.default_timer()
 			with torch.no_grad():
 				tensor_from_net = policy_net(state).to(self.device)		#Got output from model
 				indices = torch.topk(tensor_from_net, len(tensor_from_net))[1]			#Indexes of the biggest items are sorted
@@ -112,8 +110,7 @@ class Agent():
 					#If illegal move is given as output by the model, punish that action and make it select an action again.
 					if max_index in available_actions:
 						break
-				diff = timeit.default_timer() - start
-				return max_index.unsqueeze_(0), diff
+				return max_index.unsqueeze_(0)
 		
 
 

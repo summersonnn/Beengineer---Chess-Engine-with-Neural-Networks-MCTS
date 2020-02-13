@@ -142,7 +142,7 @@ class Node():
 		child = Node(child_state, self)
 		self.children.append(child)
 	def __repr__(self):
-		s="Node; children: %d; visits: %d; Cum reward: %f Avg reward: %.2f"%(len(self.children),self.visits,self.reward, self.reward/self.visits)
+		s="Node; children: %d; visits: %d; Cum reward: %f Avg reward: %.2f"%(len(self.children),self.visits,self.reward, (self.reward/self.visits) if self.visits !=0 else 999999)
 		return s
 		
 
@@ -150,9 +150,6 @@ class Node():
 	def UCTSEARCH(self, root, episode, policy_net, agent, timeout):
 		timeout_start = timeit.default_timer()
 		while True:
-			nntime = 0
-			nncounter = 0
-
 			diff = timeit.default_timer() - timeout_start
 			if diff >= timeout:
 				break
@@ -172,14 +169,12 @@ class Node():
 				if agent.strategy != None:
 					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, False)
 				else:
-					action, diff = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, True)
-					nntime += diff
-					nncounter += 1
-
-				action = action[0].item()
+					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, True)
+					
+				action = action.item()
 				traversedState = traversedState.next_state(action, True)
 				
-			print("Avg time spent in NN: " + str(nntime / nncounter)) if nncounter > 0 else "gg"
+			#print("Avg time spent in NN: " + str(nntime / nncounter)) if nncounter > 0 else "gg"
 			reward = traversedState.reward()
 			self.BACKUP(afterTraverse,reward)
 		return self.BESTCHILD(root,0)

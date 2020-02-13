@@ -22,8 +22,8 @@ target_update = 5	#how often does target network get updated? (in terms of episo
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 1
-move_time = 0.3	#Thinking time of a player
+num_episodes = 50
+move_time = 0.1	#Thinking time of a player
 
 def train(policy_net, target_net):
 	whiteWins = 0
@@ -158,6 +158,8 @@ def test(policy_net):
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal:
 				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
+				#em.print()
+				#print("\n")
 				next_state = em.get_state()
 
 				#We don't know what the reward will be until the game ends. So put 0 for now.
@@ -173,6 +175,8 @@ def test(policy_net):
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
 				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
+				#em.print()
+				#print("\n")
 				next_state = em.get_state()
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				next_state = next_state.unsqueeze(0)
