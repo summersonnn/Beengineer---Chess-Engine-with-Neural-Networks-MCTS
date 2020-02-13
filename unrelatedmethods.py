@@ -10,8 +10,9 @@ def extract_tensors(experiences):
 	action_batch = torch.cat(batch.action)
 	nextState_batch = torch.cat(batch.next_state, 0)
 	reward_batch = torch.cat(batch.reward)
-
-	return (state_batch, action_batch, reward_batch, nextState_batch)
+	next_state_av_actions = batch.next_state_av_acts
+	
+	return (state_batch, action_batch, reward_batch, nextState_batch, next_state_av_actions)
 
 #Place the incoming reward into the tempMemory
 def place_rewards(tempMemory, reward):

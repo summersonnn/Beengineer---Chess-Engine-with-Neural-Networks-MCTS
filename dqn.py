@@ -46,7 +46,7 @@ class DQN(nn.Module):
 		t = self.out(t)
 		return t'''
 
-Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'reward', 'terminal'))
+Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'next_state_av_acts', 'reward', 'terminal'))
 
 class ReplayMemory():
 	def __init__(self, capacity):
@@ -103,7 +103,7 @@ class Agent():
 		else:
 			with torch.no_grad():
 				tensor_from_net = policy_net(state).to(self.device)		#Got output from model
-				indices = torch.topk(tensor_from_net, len(tensor_from_net))[1]			#Indexes of the biggest items are sorted
+				indices = torch.topk(tensor_from_net, len(tensor_from_net))[1].detach()		#Indexes of the biggest items are sorted
 
 				for i in range(len(indices)):
 					max_index = indices[i]

@@ -10,13 +10,14 @@ import minichess
 import unrelatedmethods as um
 import fileoperations
 import mcts
-import datetime
+from copy import deepcopy
+import timeit
 
 PATH_TO_DIRECTORY = "pretrained_model/"
 batch_size = 512 
 gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
-eps_end = 0.01	#minimum exploration rate
+eps_end = 0.2	#minimum exploration rate
 eps_decay = 0.01 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
@@ -55,7 +56,9 @@ def train(policy_net, target_net):
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				state = state.unsqueeze(0)
 				next_state = next_state.unsqueeze(0)
-				tempMemory.push(dqn.Experience(state, action, next_state, 0, False))
+				gem = deepcopy(em)
+				next_state_av_acts = gem.calculate_available_actions("black")
+				tempMemory.push(dqn.Experience(state, action, next_state, next_state_av_acts, 0, False))
 				state = next_state
 
 			#Check if game ends
@@ -67,9 +70,11 @@ def train(policy_net, target_net):
 			if not terminal: 
 				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
+				gem = deepcopy(em)
+				next_state_av_acts = gem.calculate_available_actions("white")
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				next_state = next_state.unsqueeze(0)
-				tempMemory.push(dqn.Experience(state, action, next_state, 0, False))
+				tempMemory.push(dqn.Experience(state, action, next_state, next_state_av_acts, 0, False))
 
 			#Check if game ends
 			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory)
@@ -79,19 +84,41 @@ def train(policy_net, target_net):
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
 				experiences = memory.sample(batch_size)	#sample experiences from memory
-				states, actions, rewards, next_states = um.extract_tensors(experiences)	#extract them
+				states, actions, rewards, next_states, next_state_av_actions = um.extract_tensors(experiences)	#extract them
 
 				#get the current q values to calculate loss afterwards
-				current_q_values = policy_net(states).gather(dim=-1, index=actions.unsqueeze(-1))
+				current_q_values = policy_net(states).gather(dim=-1, index=actions.unsqueeze(-1)).to(device)
 				# get output(q-values) for the next state. WARNING! Some terminal states may have been passed to target_net. But final states
 				# don't have any q-values since there can be no action to take from terminal states. In the upcoming lines, we spot terminal states
 				# and don't take their garbage q-values. Instead, we take only immediate rewards. Is this the best approach?
-				next_q_values = target_net(next_states)
+				next_q_values = target_net(next_states).to(device)
+				next_state_maxq = []
 
+				#batch_corrector_start = timeit.default_timer()
+				#Getting correct q-values from next_state. To do this, we have to compare against available actions
+				for i in range(batch_size):
+					q_values = next_q_values[i]
+					q_values = q_values.to(device)
+					available_actions = next_state_av_actions[i]
+					if len(available_actions) == 0:
+						next_state_maxq.append(0)
+						continue
+					indices = torch.topk(q_values, len(q_values))[1].to(device).detach()
+
+					for j in range(len(indices)):
+						max_index = indices[j].to(device)
+						#If illegal move is given as output by the model, punish that action and make it select an action again.
+						if max_index in available_actions:
+							break
+					next_state_maxq.append(q_values[max_index])
+				#batch_corrector_end = timeit.default_timer()
+				#print("Batch Corrector Time: " + str(batch_corrector_end - batch_corrector_start))
+				
 				# set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q). Garbage q-values for terminal states are not used.
-				target_q_values = torch.cat(tuple(rewards[i].unsqueeze(0) if experiences[i][4]
-								else rewards[i].unsqueeze(0) + gamma * torch.max(next_q_values[i]).unsqueeze(0)
+				target_q_values = torch.cat(tuple(rewards[i].unsqueeze(0) if experiences[i][5]
+								else rewards[i].unsqueeze(0) + gamma * next_state_maxq[i].unsqueeze(0)
 								for i in range(len(experiences))))
+				target_q_values = target_q_values.to(device)
 				
 				#clear the old gradients. we only focus on this batch. pytorch accumulates gradients in default.
 				optimizer.zero_grad()	
