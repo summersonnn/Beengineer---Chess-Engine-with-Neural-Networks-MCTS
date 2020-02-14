@@ -22,7 +22,7 @@ class MiniChess():
 								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,				#72 (beyaz şah)
 								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,				#90 (beyaz piyonlar)
 								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,				#108 (beyaz kaleler)
-								0]													#109 -> No Progress Count (Real Valued)
+								0,0]												#109 -> No Progress Count, 110 -> Total moves (Real Valued)
 
 		'''self.board =  	[
 								["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],
@@ -98,7 +98,7 @@ class MiniChess():
 								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,				#72 (beyaz şah)
 								0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,				#90 (beyaz piyonlar)
 								0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,				#108 (beyaz kaleler)
-								0]													#109 -> No Progress Count (Real Valued)
+								0,0]												#109 -> No Progress Count, 110 -> Total moves (Real Valued)
 
 		'''self.board =  	[
 							["-R", "-N", "-B", "-Q", "-K", "-B", "-N", "-R"],

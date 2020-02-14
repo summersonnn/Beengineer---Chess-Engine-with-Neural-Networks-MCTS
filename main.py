@@ -21,7 +21,7 @@ eps_end = 0.35	#minimum exploration rate
 eps_decay = 0.01 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 50000 #memory size to hold each state,action,next_state, reward, terminal tuple
-per_game_memory_size = 200 #Assuming  players will make 100 moves at most per game (includes both sides)
+per_game_memory_size = 60 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
 move_time = 0.1	#Thinking time of a player
 
@@ -29,6 +29,7 @@ def train(policy_net, target_net):
 	whiteWins = 0
 	blackWins = 0
 	drawByNoProgress = 0
+	drawByTooLongGame = 0
 	drawByStaleMate = 0
 	global loss
 	global em
@@ -61,9 +62,9 @@ def train(policy_net, target_net):
 				state = next_state
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory, True)
 			
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
@@ -76,9 +77,9 @@ def train(policy_net, target_net):
 				tempMemory.push(dqn.Experience(state, action, next_state, next_state_av_acts, 0, False))
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory, True)
 			
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
@@ -155,10 +156,11 @@ def train(policy_net, target_net):
 			print("Episode:" + str(episode) + " -------Weights are updated!")
 
 	print("\n")
-	print("White Wins: " + str(whiteWins) + "\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
-	print("Black Wins: " + str(blackWins) + "\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
-	print("Draw By No Progress: " + str(drawByNoProgress) + "\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))	
-	print("Draw By Stalemate: " + str(drawByStaleMate) + "\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
+	print("White Wins: " + str(whiteWins) + "\t\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
+	print("Black Wins: " + str(blackWins) + "\t\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
+	print("Draw By No Progress: " + str(drawByNoProgress) + "\t\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))
+	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tNo Progress Rate: %" + str(100*drawByTooLongGame/num_episodes))	
+	print("Draw By Stalemate: " + str(drawByStaleMate) + "\t\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
 	print("\n")
 	print("Memory length: " + str(len(memory.memory)))
 	print("Average Move per game: " + str(len(memory.memory) / num_episodes))
@@ -168,6 +170,7 @@ def test(policy_net):
 	whiteWins = 0
 	blackWins = 0
 	drawByNoProgress = 0
+	drawByTooLongGame = 0
 	drawByStaleMate = 0
 	global em
 
@@ -198,9 +201,9 @@ def test(policy_net):
 				state = next_state
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None, True)
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
@@ -213,9 +216,9 @@ def test(policy_net):
 				next_state = next_state.unsqueeze(0)
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None, True)
 		
 			if terminal:
 				print(str(move_count) + " moves played in this match.\n")
@@ -223,10 +226,11 @@ def test(policy_net):
 
 
 	print("\n")
-	print("White Wins: " + str(whiteWins) + "\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
-	print("Black Wins: " + str(blackWins) + "\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
-	print("Draw By No Progress: " + str(drawByNoProgress) + "\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))	
-	print("Draw By Stalemate: " + str(drawByStaleMate) + "\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
+	print("White Wins: " + str(whiteWins) + "\t\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
+	print("Black Wins: " + str(blackWins) + "\t\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
+	print("Draw By No Progress: " + str(drawByNoProgress) + "\t\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))
+	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tNo Progress Rate: %" + str(100*drawByTooLongGame/num_episodes))	
+	print("Draw By Stalemate: " + str(drawByStaleMate) + "\t\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
 	print("\n")
 	return None
 

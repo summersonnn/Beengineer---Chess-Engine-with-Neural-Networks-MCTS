@@ -20,10 +20,10 @@ def place_rewards(tempMemory, reward):
 		tempMemory.memory[i] = tempMemory.memory[i]._replace(reward = torch.from_numpy(np.array([reward], dtype=np.float32)).unsqueeze(0))
 	return tempMemory
 
-def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory, IsForNoProgess=False):
+def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory, IsForNoProgess=False):
 
-	if not IsForNoProgess:
-		if not terminal and len(em.available_actions) == 0:
+	if not IsForNoProgess and not terminal:
+		if len(em.available_actions) == 0:
 			terminal = True
 			if em.checkedby == 0:
 				print("Stalemate!")
@@ -41,15 +41,22 @@ def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoPr
 				if tempMemory != None:
 					place_rewards(tempMemory, 100)  	#Place 1 into the reward section of namedtuples in the tempMemory if it's training
 
-	else:
-		if not terminal and em.bitVectorBoard[108] > 30:
+	elif not terminal:
+		if em.bitVectorBoard[108] >= 30:
 			terminal = True
 			print("Draw by no progress!")
 			drawByNoProgress += 1
-			if tempMemory != None:
-					place_rewards(tempMemory, 0)  	#Place 0 into the reward section of namedtuples in the tempMemory if it's training
+			
+		elif em.bitVectorBoard[109] >= 60:
+			terminal = True
+			print("Draw by toooooo long game!")
+			drawByTooLongGame += 1
 
-	return terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory
+		if tempMemory != None:
+			place_rewards(tempMemory, 0)  	#Place 0 into the reward section of namedtuples in the tempMemory if it's training
+
+
+	return terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory
 
 
 

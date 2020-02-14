@@ -55,8 +55,9 @@ class State():
 		next.BoardObject.board[int(current_action[0])][int(current_action[1])] = "XX"
 		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
 
-		#Increase No Progress count, if there is progress it will be set to zero in the upcoming lines
+		#Increase No Progress count and move count, if there is progress it will be set to zero in the upcoming lines
 		next.BoardObject.bitVectorBoard[108] += 1
+		next.BoardObject.bitVectorBoard[109] += 1
 
 		#If pawn moves, Set No Progress Count back to 0
 		if pieceNotationBeforeMove[1] == "P":
@@ -73,8 +74,6 @@ class State():
 		capturedPieceNotation = self.BoardObject.board[int(current_action[2])][int(current_action[3])]
 
 		if capturedPieceNotation != "XX":
-			if capturedPieceNotation[1] == "K":
-				raise ValueError("ŞAH YENDI ")
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, enemyList)
@@ -107,7 +106,7 @@ class State():
 		return next
 
 	def terminal(self):
-		if self.BoardObject.bitVectorBoard[108] > 30 or self.numberOfMoves == 0:
+		if self.BoardObject.bitVectorBoard[108] >= 30 or self.BoardObject.bitVectorBoard[109] >= 60 or self.numberOfMoves == 0:
 			return True
 		return False
 
@@ -118,7 +117,7 @@ class State():
 				reward = 0
 			else:
 				reward = 1 if self.color == "black" else -1
-		elif self.BoardObject.bitVectorBoard[108] > 30:
+		else:
 			reward = 0
 
 		return reward
@@ -176,7 +175,6 @@ class Node():
 				action = action.item()
 				traversedState = traversedState.next_state(action, True)
 				
-			#print("Avg time spent in NN: " + str(nntime / nncounter)) if nncounter > 0 else "gg"
 			reward = traversedState.reward()
 			self.BACKUP(afterTraverse,reward)
 		return self.BESTCHILD(root,0)
@@ -198,7 +196,7 @@ class Node():
 	#If white, bigger score means better child.
 	#If black, lower score means better child.
 	def BESTCHILD(self, node,scalar):
-		bestscore=-1000 if node.state.color == "white" else 1000
+		bestscore=-100000 if node.state.color == "white" else 100000
 		bestchildren = None
 
 		for c in node.children:
