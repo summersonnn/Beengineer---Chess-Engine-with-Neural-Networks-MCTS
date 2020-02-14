@@ -15,15 +15,14 @@ import timeit
 
 PATH_TO_DIRECTORY = "pretrained_model/"
 batch_size = 512 
-gamma = 1 #set this to 0.999 or near if you want stochasticity. 1 assumes same action always result in same rewards -> future rewards are NOT discounted
+gamma = 1 		#1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
-eps_end = 0.2	#minimum exploration rate
+eps_end = 0.35	#minimum exploration rate
 eps_decay = 0.01 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
-memory_size = 100000 #memory size to hold each state,action,next_state, reward, terminal tuple
-per_game_memory_size = 100 #Assuming  players will make 100 moves at most per game (includes both sides)
+memory_size = 50000 #memory size to hold each state,action,next_state, reward, terminal tuple
+per_game_memory_size = 200 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-num_episodes = 50
 move_time = 0.1	#Thinking time of a player
 
 def train(policy_net, target_net):
@@ -101,12 +100,12 @@ def train(policy_net, target_net):
 					q_values = q_values.to(device)
 					available_actions = next_state_av_actions[i]
 					if len(available_actions) == 0:
-						next_state_maxq.append(0)
+						next_state_maxq.append(torch.tensor(-10000, dtype=torch.float32))
 						continue
 					indices = torch.topk(q_values, len(q_values))[1].to(device).detach()
 
 					for j in range(len(indices)):
-						max_index = indices[j].to(device)
+						max_index = indices[j].to(device).detach()
 						#If illegal move is given as output by the model, punish that action and make it select an action again.
 						if max_index in available_actions:
 							break
@@ -133,6 +132,7 @@ def train(policy_net, target_net):
 			#If we're in a terminal state, we never step in the terminal state. We end the episode instead.
 			#Record the step number.'''
 			if terminal:
+				print(str(tempMemory.push_count) + " moves played in this match.\n")
 				#Editing the last memory, so that its terminal value is True
 				tempMemory.memory[-1] = tempMemory.memory[-1]._replace(terminal = True)	
 
@@ -172,12 +172,14 @@ def test(policy_net):
 	global em
 
 	for episode in range(1, num_episodes + 1):
-		print("\nMatch number: " + str(episode))
+		print("Match number: " + str(episode))
 		terminal = False
+		move_count = 0
 		em.reset()	#reset the environment to start all over again
 		
 		#Calculating available actions for just once, to initiate sequence
 		em.calculate_available_actions("white")
+
 		
 		while True:
 			state = em.get_state()	#get the BitVectorBoard state from the environment as a tensor 
@@ -185,6 +187,7 @@ def test(policy_net):
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal:
 				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
+				move_count += 1
 				#em.print()
 				#print("\n")
 				next_state = em.get_state()
@@ -202,6 +205,7 @@ def test(policy_net):
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
 				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
+				move_count += 1
 				#em.print()
 				#print("\n")
 				next_state = em.get_state()
@@ -214,6 +218,7 @@ def test(policy_net):
 			terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByStaleMate, None, True)
 		
 			if terminal:
+				print(str(move_count) + " moves played in this match.\n")
 				break 
 
 
@@ -232,7 +237,8 @@ if __name__ == '__main__':
 	policy_net = dqn.DQN().to(device)
 	em = minichess.MiniChess(device)
 	last_trained_model = fileoperations.find_last_edited_file(PATH_TO_DIRECTORY)	#Returns the last_trained model from multiple models.
-	
+	num_episodes = int(sys.argv[2]) if len(sys.argv) > 2 else 100
+
 	if (sys.argv[1]) == "train":
 		strategy = dqn.EpsilonGreedyStrategy(eps_start, eps_end, eps_decay) 
 		agent = dqn.Agent(strategy, device)
