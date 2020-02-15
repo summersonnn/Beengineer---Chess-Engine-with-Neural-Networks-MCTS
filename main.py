@@ -14,7 +14,7 @@ from copy import deepcopy
 import timeit
 
 PATH_TO_DIRECTORY = "pretrained_model/"
-batch_size = 512 
+batch_size = 256 
 gamma = 1 		#1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.35	#minimum exploration rate
@@ -87,12 +87,19 @@ def train(policy_net, target_net):
 				experiences = memory.sample(batch_size)	#sample experiences from memory
 				states, actions, rewards, next_states, next_state_av_actions = um.extract_tensors(experiences)	#extract them
 
+				states = states.to(device)
+				actions = actions.to(device)
+				rewards = rewards.to(device)
+				next_states = next_states.to(device)
+
 				#get the current q values to calculate loss afterwards
-				current_q_values = policy_net(states).gather(dim=-1, index=actions.unsqueeze(-1)).to(device)
-				# get output(q-values) for the next state. WARNING! Some terminal states may have been passed to target_net. But final states
-				# don't have any q-values since there can be no action to take from terminal states. In the upcoming lines, we spot terminal states
-				# and don't take their garbage q-values. Instead, we take only immediate rewards. Is this the best approach?
-				next_q_values = target_net(next_states).to(device)
+				#Shape of policy_net(states): [batchsize, 282]
+				#Shape of actions: [batchsize] (Tek rowluk bir tensor)
+				#Shape of actions.unsq(-1): [batchsize, 1] (Bir üstteki rowdakileri her row'a birer tane olacak şekilde rowlara ayır)
+				#Shape of current_q_values: [batchsize, 1] (Her rowdan en büyük q-value'yu seçtik.)
+				current_q_values = policy_net(states).gather(dim=1, index=actions.unsqueeze(-1)).to(device)
+				#Shape of next_q_values:	[batchsize,282]
+				next_q_values = target_net(next_states).detach().to(device)
 				next_state_maxq = []
 
 				#batch_corrector_start = timeit.default_timer()
@@ -102,7 +109,7 @@ def train(policy_net, target_net):
 					q_values = q_values.to(device)
 					available_actions = next_state_av_actions[i]
 					if len(available_actions) == 0:
-						next_state_maxq.append(torch.tensor(-10000, dtype=torch.float32))
+						next_state_maxq.append(torch.tensor(-1000000, dtype=torch.float32))
 						continue
 					indices = torch.topk(q_values, len(q_values))[1].to(device).detach()
 
@@ -114,12 +121,13 @@ def train(policy_net, target_net):
 					next_state_maxq.append(q_values[max_index])
 				#batch_corrector_end = timeit.default_timer()
 				#print("Batch Corrector Time: " + str(batch_corrector_end - batch_corrector_start))
-				
+
 				# set y_j to r_j for terminal state, otherwise to r_j + gamma*max(Q). Garbage q-values for terminal states are not used.
 				target_q_values = torch.cat(tuple(rewards[i].unsqueeze(0) if experiences[i][5]
 								else rewards[i].unsqueeze(0) + gamma * next_state_maxq[i].unsqueeze(0)
-								for i in range(len(experiences))))
+								for i in range(batch_size)))
 				target_q_values = target_q_values.to(device)
+				#Shape of target_q_values: [batchsize, 1]
 				
 				#clear the old gradients. we only focus on this batch. pytorch accumulates gradients in default.
 				optimizer.zero_grad()	
