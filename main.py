@@ -167,7 +167,7 @@ def train(policy_net, target_net):
 	print("White Wins: " + str(whiteWins) + "\t\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
 	print("Black Wins: " + str(blackWins) + "\t\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
 	print("Draw By No Progress: " + str(drawByNoProgress) + "\t\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))
-	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tNo Progress Rate: %" + str(100*drawByTooLongGame/num_episodes))	
+	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tToo Long Game Rate: %" + str(100*drawByTooLongGame/num_episodes))	
 	print("Draw By Stalemate: " + str(drawByStaleMate) + "\t\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
 	print("Average Move per game: " + str(move_count / num_episodes))
 	return None
@@ -235,7 +235,7 @@ def test(policy_net):
 	print("White Wins: " + str(whiteWins) + "\t\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
 	print("Black Wins: " + str(blackWins) + "\t\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
 	print("Draw By No Progress: " + str(drawByNoProgress) + "\t\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))
-	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tNo Progress Rate: %" + str(100*drawByTooLongGame/num_episodes))	
+	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tToo Long Game Rate: %" + str(100*drawByTooLongGame/num_episodes))	
 	print("Draw By Stalemate: " + str(drawByStaleMate) + "\t\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
 	print("Average Move per game: " + str(move_count / num_episodes))
 	return None
