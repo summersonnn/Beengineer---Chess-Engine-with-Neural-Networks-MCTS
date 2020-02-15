@@ -18,9 +18,9 @@ batch_size = 512
 gamma = 1 		#1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.35	#minimum exploration rate
-eps_decay = 0.01 #higher decay means faster reduction of exploration rate
+eps_decay = 0.005 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
-memory_size = 50000 #memory size to hold each state,action,next_state, reward, terminal tuple
+memory_size = 15000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 60 #Assuming  players will make 100 moves at most per game (includes both sides)
 lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
 move_time = 0.1	#Thinking time of a player
@@ -31,6 +31,7 @@ def train(policy_net, target_net):
 	drawByNoProgress = 0
 	drawByTooLongGame = 0
 	drawByStaleMate = 0
+	move_count = 0
 	global loss
 	global em
 
@@ -134,12 +135,12 @@ def train(policy_net, target_net):
 			#Record the step number.'''
 			if terminal:
 				print(str(tempMemory.push_count) + " moves played in this match.\n")
+				move_count += tempMemory.push_count
 				#Editing the last memory, so that its terminal value is True
 				tempMemory.memory[-1] = tempMemory.memory[-1]._replace(terminal = True)	
 
 				#Moving full tuples to big memory, and deleting the temp memory
-				memory.memory.extend(tempMemory.memory)
-				memory.push_count += tempMemory.push_count
+				memory.pushBlock(tempMemory)
 				del tempMemory
 				break 
 
@@ -155,15 +156,12 @@ def train(policy_net, target_net):
 						)
 			print("Episode:" + str(episode) + " -------Weights are updated!")
 
-	print("\n")
 	print("White Wins: " + str(whiteWins) + "\t\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
 	print("Black Wins: " + str(blackWins) + "\t\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
 	print("Draw By No Progress: " + str(drawByNoProgress) + "\t\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))
 	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tNo Progress Rate: %" + str(100*drawByTooLongGame/num_episodes))	
 	print("Draw By Stalemate: " + str(drawByStaleMate) + "\t\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
-	print("\n")
-	print("Memory length: " + str(len(memory.memory)))
-	print("Average Move per game: " + str(len(memory.memory) / num_episodes))
+	print("Average Move per game: " + str(move_count / num_episodes))
 	return None
 
 def test(policy_net):
@@ -172,12 +170,13 @@ def test(policy_net):
 	drawByNoProgress = 0
 	drawByTooLongGame = 0
 	drawByStaleMate = 0
+	move_count = 0
 	global em
 
 	for episode in range(1, num_episodes + 1):
 		print("Match number: " + str(episode))
 		terminal = False
-		move_count = 0
+		eps_move_count = 0
 		em.reset()	#reset the environment to start all over again
 		
 		#Calculating available actions for just once, to initiate sequence
@@ -190,7 +189,7 @@ def test(policy_net):
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal:
 				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
-				move_count += 1
+				eps_move_count += 1
 				#em.print()
 				#print("\n")
 				next_state = em.get_state()
@@ -208,7 +207,7 @@ def test(policy_net):
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
 				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
-				move_count += 1
+				eps_move_count += 1
 				#em.print()
 				#print("\n")
 				next_state = em.get_state()
@@ -221,17 +220,16 @@ def test(policy_net):
 			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None, True)
 		
 			if terminal:
-				print(str(move_count) + " moves played in this match.\n")
+				move_count += eps_move_count
+				print(str(eps_move_count) + " moves played in this match.\n")
 				break 
 
-
-	print("\n")
 	print("White Wins: " + str(whiteWins) + "\t\t\tWin Rate: %" + str(100*whiteWins/num_episodes))	
 	print("Black Wins: " + str(blackWins) + "\t\t\tWin Rate: %" + str(100*blackWins/num_episodes))	
 	print("Draw By No Progress: " + str(drawByNoProgress) + "\t\tNo Progress Rate: %" + str(100*drawByNoProgress/num_episodes))
 	print("Draw By Too Long Game: " + str(drawByTooLongGame) + "\tNo Progress Rate: %" + str(100*drawByTooLongGame/num_episodes))	
 	print("Draw By Stalemate: " + str(drawByStaleMate) + "\t\tStalemate Rate: %" + str(100*drawByStaleMate/num_episodes))
-	print("\n")
+	print("Average Move per game: " + str(move_count / num_episodes))
 	return None
 
 

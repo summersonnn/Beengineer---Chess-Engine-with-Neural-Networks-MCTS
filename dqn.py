@@ -61,6 +61,20 @@ class ReplayMemory():
 			self.memory[self.push_count % self.capacity] = experience
 		self.push_count += 1
 
+	def pushBlock(self, tempMemory):
+		if len(self.memory) + len(tempMemory.memory) <= self.capacity:
+			self.memory.extend(tempMemory.memory)
+			replaceMuch = len(tempMemory.memory)
+		else:
+			putHere = self.push_count % len(self.memory)
+			replaceMuch = len(tempMemory.memory) if len(self.memory) - putHere >= len(tempMemory.memory) else len(self.memory) - putHere
+			for i in range(replaceMuch):
+				self.memory[putHere + i] = tempMemory.memory[-i:]
+
+		self.push_count += replaceMuch
+
+		
+
 	def sample(self, batch_size):
 		return random.sample(self.memory, batch_size)
 
