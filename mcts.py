@@ -163,14 +163,14 @@ class Node():
 			#ROLLOUT
 			traversedState = afterTraverse.state
 			while traversedState.terminal()==False:
-				stateTensor = traversedState.BoardObject.get_state()
+				stateTensor = traversedState.BoardObject.get_state() 
 				#randomIndex = random.randrange(0, traversedState.numberOfMoves)
 				#action = traversedState.BoardObject.available_actions[randomIndex]
 				#If strategy is not None, it's Training, if it is None, it's Testing
 				if agent.strategy != None:
-					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, False)
+					action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, False)
 				else:
-					action = agent.select_action(stateTensor, traversedState.BoardObject.available_actions, episode, policy_net, True)
+					action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, True)
 					
 				action = action.item()
 				traversedState = traversedState.next_state(action, True)

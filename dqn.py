@@ -98,7 +98,7 @@ class Agent():
 		self.strategy = strategy #EpsilonGreedyStrategy object
 		self.device = device
 
-	def select_action(self, state, available_actions, episode, policy_net, isTest=False):
+	def select_action(self, state, color, available_actions, episode, policy_net, isTest=False):
 		if len(available_actions) == 0:
 			raise ValueError("Error")
 
@@ -119,11 +119,18 @@ class Agent():
 				tensor_from_net = policy_net(state).to(self.device)		#Got output from model
 				indices = torch.topk(tensor_from_net, len(tensor_from_net))[1].detach()		#Indexes of the biggest items are sorted
 
-				for i in range(len(indices)):
-					max_index = indices[i]
-					#If illegal move is given as output by the model, punish that action and make it select an action again.
-					if max_index in available_actions:
-						break
+				if color == "white":
+					for i in indices:
+						max_index = i
+						#If illegal move is given as output by the model, punish that action and make it select an action again.
+						if max_index in available_actions:
+							break
+				else:
+					for i in reversed(indices):
+						max_index = i
+						#If illegal move is given as output by the model, punish that action and make it select an action again.
+						if max_index in available_actions:
+							break
 				return max_index.unsqueeze_(0)
 		
 
