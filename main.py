@@ -19,7 +19,7 @@ batch_size = 256
 gamma = 1 		#1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.1	#minimum exploration rate
-eps_decay = 0.005 #higher decay means faster reduction of exploration rate
+eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 10000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 60 #Assuming  players will make 100 moves at most per game (includes both sides)
@@ -283,12 +283,12 @@ if __name__ == '__main__':
 			selfPlay = False
 			oldgeneration_model = fileoperations.find_last_edited_file(PATH_TO_OLD_GENERATION_MODEL_DIR)
 			policy_net_old = dqn.DQN().to(device)
-			policy_net_old.eval()
 
 			if oldgeneration_model is not None:
 				print("***Old Generation model: " + oldgeneration_model)
 				checkpointOld = torch.load(oldgeneration_model, map_location=device)
 				policy_net_old.load_state_dict(checkpointOld['model_state_dict'])
+				policy_net_old.eval()
 				del checkpointOld
 			else:
 				print("Test cannot be done due to absence of OLDMODEL weights file")
