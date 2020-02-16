@@ -14,6 +14,7 @@ from copy import deepcopy
 import timeit
 
 PATH_TO_DIRECTORY = "pretrained_model/"
+PATH_TO_OLD_GENERATION_MODEL_DIR = "oldgeneration_model/"
 batch_size = 256 
 gamma = 1 		#1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
@@ -172,7 +173,7 @@ def train(policy_net, target_net):
 	print("Average Move per game: " + str(move_count / num_episodes))
 	return None
 
-def test(policy_net):
+def test(policy_net, policy_net_old=None):
 	whiteWins = 0
 	blackWins = 0
 	drawByNoProgress = 0
@@ -196,7 +197,7 @@ def test(policy_net):
 			
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal:
-				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net if policy_net_old is None else policy_net_old, agent, device)	#white makes his move
 				eps_move_count += 1
 				#em.print()
 				#print("\n")
@@ -214,7 +215,7 @@ def test(policy_net):
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net , agent, device)	#white makes his move
 				eps_move_count += 1
 				#em.print()
 				#print("\n")
@@ -275,6 +276,24 @@ if __name__ == '__main__':
 		train(policy_net, target_net)
 
 	elif (sys.argv[1]) == "test":
+		selfPlay = True
+		choice = input("Self-play for last model (S) or play against another generation? (A)?\n ")
+
+		if choice == "A" or choice == "a":
+			selfPlay = False
+			oldgeneration_model = fileoperations.find_last_edited_file(PATH_TO_OLD_GENERATION_MODEL_DIR)
+			policy_net_old = dqn.DQN().to(device)
+			policy_net_old.eval()
+
+			if oldgeneration_model is not None:
+				print("***Old Generation model: " + oldgeneration_model)
+				checkpointOld = torch.load(oldgeneration_model, map_location=device)
+				policy_net_old.load_state_dict(checkpointOld['model_state_dict'])
+				del checkpointOld
+			else:
+				print("Test cannot be done due to absence of OLDMODEL weights file")
+				os.kill(os.getpid(), signal.SIGTERM)
+
 		agent = dqn.Agent(None, device)	#strategy is none since epsilon greedy strategy is not required in test mode. We don't explore.
 
 		if last_trained_model is not None:
@@ -288,7 +307,7 @@ if __name__ == '__main__':
 
 		#Policy net should be in eval mode to avoid gradient decent in test mode.
 		policy_net.eval()
-		test(policy_net)
+		test(policy_net) if selfPlay == True else test(policy_net, policy_net_old)
 
 	#sys.exit() or raise SystemExit doesn't work for some reason. That's the only way I could end the process.
 	os.kill(os.getpid(), signal.SIGTERM)

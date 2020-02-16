@@ -2,3 +2,4 @@ aa.txt
 __pycache__/
 recovery_points/
 pretrained_model/
+oldgeneration_model/
