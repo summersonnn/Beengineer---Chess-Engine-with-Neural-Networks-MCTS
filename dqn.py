@@ -68,8 +68,12 @@ class ReplayMemory():
 		else:
 			putHere = self.push_count % len(self.memory)
 			replaceMuch = len(tempMemory.memory) if len(self.memory) - putHere >= len(tempMemory.memory) else len(self.memory) - putHere
-			for i in range(replaceMuch):
-				self.memory[putHere + i] = tempMemory.memory[-i:]
+			tempMemory.memory = reversed(tempMemory.memory)
+
+			for i,val in enumerate(tempMemory.memory):
+				if i == replaceMuch:
+					break
+				self.memory[putHere + i] = val
 
 		self.push_count += replaceMuch
 
