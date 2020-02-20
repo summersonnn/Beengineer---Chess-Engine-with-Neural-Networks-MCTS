@@ -190,7 +190,8 @@ class Node():
 		for i in range(node.state.numberOfMoves):
 			new_state=node.state.next_state()
 			node.add_child(new_state)
-		return node.children[-1]
+		return random.choice(node.children)
+
 
 	#Score for childs are calculated according to color of current node. Because rewards were calculated according to color. 
 	#If white, bigger score means better child.
@@ -199,7 +200,7 @@ class Node():
 		bestscore=-100000 if node.state.color == "white" else 100000
 		bestchildren = None
 
-		for c in node.children:
+		for c in random.sample(node.children, len(node.children)):
 			if c.visits == 0:
 				return c
 			else:
