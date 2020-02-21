@@ -58,6 +58,15 @@ def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoPr
 
 	return terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory
 
+def learning_rate_calculator(episode):
+	if episode < 1000:
+		return 0.2
+	if episode < 5000:
+		return 0.02
+	else:
+		return 0.002
+
+
 
 
 

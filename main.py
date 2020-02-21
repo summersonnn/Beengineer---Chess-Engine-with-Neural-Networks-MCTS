@@ -23,8 +23,7 @@ eps_decay = 0.001 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 10000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 60 #Assuming  players will make 100 moves at most per game (includes both sides)
-lr = 0.001 #how much to change the model in response to the estimated error each time the model weights are updated
-move_time = 0.5	#Thinking time of a player
+move_time = 0.1	#Thinking time of a player
 
 def train(policy_net, target_net):
 	whiteWins = 0
@@ -197,7 +196,7 @@ def test(policy_net, policy_net_old=None):
 			
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal:
-				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net if policy_net_old is None else policy_net_old, agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
 				eps_move_count += 1
 				#em.print()
 				#print("\n")
@@ -215,7 +214,7 @@ def test(policy_net, policy_net_old=None):
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net , agent, device)	#white makes his move
+				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net if policy_net_old is None else policy_net_old, agent, device)	#white makes his move
 				eps_move_count += 1
 				#em.print()
 				#print("\n")
@@ -254,7 +253,6 @@ if __name__ == '__main__':
 		strategy = dqn.EpsilonGreedyStrategy(eps_start, eps_end, eps_decay) 
 		agent = dqn.Agent(strategy, device)
 		memory = dqn.ReplayMemory(memory_size)
-		optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
 		target_net = dqn.DQN().to(device)
 		past_episodes = 0	#how many episode is played before? this variable may be changed in the upcoming if block.
 		loss = 0
@@ -263,14 +261,15 @@ if __name__ == '__main__':
 			print("***Last trained model: " + last_trained_model)
 			checkpoint = torch.load(last_trained_model, map_location=device)
 			policy_net.load_state_dict(checkpoint['model_state_dict'])
-			optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 			past_episodes = checkpoint['episode']
+			lr = um.learning_rate_calculator(past_episodes) #how much to change the model in response to the estimated error each time the model weights are updated
 			loss = checkpoint['loss']
 			agent.current_step = checkpoint['current_step']
-			del checkpoint
-			#If you don't want to start exploration rate from where its left, delete the previous line.
 
+		optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
+		optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 		#Weights and biases in the target net is same as in policy net. Target net will work in eval mode and will not update the weights (on its own)
+		del checkpoint
 		target_net.load_state_dict(policy_net.state_dict())
 		target_net.eval()
 		train(policy_net, target_net)
