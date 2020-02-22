@@ -299,6 +299,7 @@ class MiniChess():
 
 	#Print the board
 	def print(self):
+		print("\n")
 		for i in range(6):
 			for j in range(3):
 				print(self.board[i][j], end=" ")

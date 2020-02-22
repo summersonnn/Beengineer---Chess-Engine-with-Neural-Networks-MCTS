@@ -33,7 +33,7 @@ class State():
 			
 	#If runs for EXPANDING, action does not come as parameter since it will expanded fully, in every possible way.
 	#If runs for ROLLOUT, action comes as parameter from rollout function
-	def next_state(self, action=0, forRollout=False):
+	def next_state(self, action=0, forRollout=False, user_action=None):
 		State.node_count += 1
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
@@ -41,13 +41,16 @@ class State():
 		#Selection action when expanding the tree.
 		#Deleting the action that is already used to spawned a child. 
 		#Original actions will be left in self.availableActions.
-		if not forRollout:
-			action = self.leftActions[0] #e.g 145
-			next.createdByThisAction = action
-			del self.leftActions[0]
-
-		#Converting action Scalar to String Format
-		current_action = State.inv_actions[action]
+		if user_action == None:
+			if not forRollout:
+				action = self.leftActions[0] #e.g 145
+				next.createdByThisAction = action
+				del self.leftActions[0]
+			#Converting action Scalar to String Format
+			current_action = State.inv_actions[action]
+		#If the move was played by human
+		else:
+			current_action = user_action
 
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = self.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"

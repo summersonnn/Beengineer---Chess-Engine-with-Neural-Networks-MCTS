@@ -7,7 +7,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import dqn
 import minichess
-import unrelatedmethods as um
+import helperfunctions as hf
 import fileoperations
 import mcts
 from copy import deepcopy
@@ -63,9 +63,9 @@ def train(policy_net, target_net):
 				state = next_state
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory, True)
 			
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
@@ -78,14 +78,14 @@ def train(policy_net, target_net):
 				tempMemory.push(dqn.Experience(state, action, next_state, next_state_av_acts, 0, False))
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory, True)
 			
 			#Returns true if length of the memory is greater than or equal to batch_size
 			if memory.can_provide_sample(batch_size):
 				experiences = memory.sample(batch_size)	#sample experiences from memory
-				states, actions, rewards, next_states, next_state_av_actions = um.extract_tensors(experiences)	#extract them
+				states, actions, rewards, next_states, next_state_av_actions = hf.extract_tensors(experiences)	#extract them
 
 				states = states.to(device)
 				actions = actions.to(device)
@@ -172,7 +172,7 @@ def train(policy_net, target_net):
 	print("Average Move per game: " + str(move_count / num_episodes))
 	return None
 
-def test(policy_net, policy_net_old=None):
+def test(policy_net, policy_net_old=None, humanVsComputer=False):
 	whiteWins = 0
 	blackWins = 0
 	drawByNoProgress = 0
@@ -196,7 +196,14 @@ def test(policy_net, policy_net_old=None):
 			
 			#If the game didn't end with the last move, now it's white's turn to move
 			if not terminal:
-				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
+				#Not play against computer as White
+				if humanVsComputer != "W" and humanVsComputer != "w":
+					em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
+				#Play against computer as White
+				else:
+					em.print()
+					em = hf.get_user_move(em, "white")
+
 				eps_move_count += 1
 				#em.print()
 				#print("\n")
@@ -208,13 +215,20 @@ def test(policy_net, policy_net_old=None):
 				state = next_state
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "black", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None, True)
 				
 			#If the game didn't end with the last move, now it's black's turn to move
 			if not terminal: 
-				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net if policy_net_old is None else policy_net_old, agent, device)	#white makes his move
+				#Not play against computer as Black
+				if humanVsComputer != "B" and humanVsComputer != "b":
+					em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net if policy_net_old is None else policy_net_old, agent, device)	#white makes his move
+				#Play against computer as Black
+				else:
+					em.print()
+					em = hf.get_user_move(em, "black")
+
 				eps_move_count += 1
 				#em.print()
 				#print("\n")
@@ -223,9 +237,9 @@ def test(policy_net, policy_net_old=None):
 				next_state = next_state.unsqueeze(0)
 
 			#Check if game ends
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None)
 			#Check if game ends by no progress rule
-			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	um.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None, True)
+			terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory =	hf.check_game_termination(em , "white", terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, None, True)
 		
 			if terminal:
 				move_count += eps_move_count
@@ -256,27 +270,30 @@ if __name__ == '__main__':
 		target_net = dqn.DQN().to(device)
 		past_episodes = 0	#how many episode is played before? this variable may be changed in the upcoming if block.
 		loss = 0
-		
+		lr = 0.2
+		optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
+
 		if last_trained_model is not None:
 			print("***Last trained model: " + last_trained_model)
 			checkpoint = torch.load(last_trained_model, map_location=device)
 			policy_net.load_state_dict(checkpoint['model_state_dict'])
 			past_episodes = checkpoint['episode']
-			lr = um.learning_rate_calculator(past_episodes) #how much to change the model in response to the estimated error each time the model weights are updated
+			lr = hf.learning_rate_calculator(past_episodes) #how much to change the model in response to the estimated error each time the model weights are updated
 			loss = checkpoint['loss']
+			optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
+			optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 			agent.current_step = checkpoint['current_step']
+			del checkpoint
 
-		optimizer = optim.Adam(params=policy_net.parameters(), lr=lr)
-		optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 		#Weights and biases in the target net is same as in policy net. Target net will work in eval mode and will not update the weights (on its own)
-		del checkpoint
 		target_net.load_state_dict(policy_net.state_dict())
 		target_net.eval()
 		train(policy_net, target_net)
 
 	elif (sys.argv[1]) == "test":
 		selfPlay = True
-		choice = input("Self-play for last model (S) or play against another generation? (A)?\n ")
+		humanVsComputer = False
+		choice = input("Self-play for last model (S) or play against another generation? (A)?\n Play against computer as White (W) as black (B)")
 
 		if choice == "A" or choice == "a":
 			selfPlay = False
@@ -293,6 +310,9 @@ if __name__ == '__main__':
 				print("Test cannot be done due to absence of OLDMODEL weights file")
 				os.kill(os.getpid(), signal.SIGTERM)
 
+		elif choice == "W" or choice == "w" or choice == "B" or choice == "b":
+			humanVsComputer = True
+
 		agent = dqn.Agent(None, device)	#strategy is none since epsilon greedy strategy is not required in test mode. We don't explore.
 
 		if last_trained_model is not None:
@@ -306,7 +326,7 @@ if __name__ == '__main__':
 
 		#Policy net should be in eval mode to avoid gradient decent in test mode.
 		policy_net.eval()
-		test(policy_net) if selfPlay == True else test(policy_net, policy_net_old)
+		test(policy_net, None, choice) if humanVsComputer == True else test(policy_net, policy_net_old) if selfPlay == False else test(policy_net)
 
 	#sys.exit() or raise SystemExit doesn't work for some reason. That's the only way I could end the process.
 	os.kill(os.getpid(), signal.SIGTERM)
