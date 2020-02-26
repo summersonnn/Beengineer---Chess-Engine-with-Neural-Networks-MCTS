@@ -825,17 +825,17 @@ class Rook():
 
 def coorToBitVector(x, y, notation):
 		coor = x*3 + y
-		if notation == "+K":
+		if notation == "-K":
 			return coor
-		elif notation == "+P":
-			return coor + 18
-		elif notation == "+R":
-			return coor + 36
-		elif notation == "-K":
-			return coor + 54
 		elif notation == "-P":
-			return coor + 72
+			return coor + 18
 		elif notation == "-R":
+			return coor + 36
+		elif notation == "+K":
+			return coor + 54
+		elif notation == "+P":
+			return coor + 72
+		elif notation == "+R":
 			return coor + 90
 
 #Decides if the given square is in between of other given 2 squares
