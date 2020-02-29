@@ -66,11 +66,6 @@ class State():
 		next.BoardObject.bitVectorBoard[108] = State.nz.normalizeNoProgress(next.BoardObject.NoProgressCount)
 		next.BoardObject.bitVectorBoard[109] = State.nz.normalizeMoveCount(next.BoardObject.MoveCount)
 
-		if (next.BoardObject.bitVectorBoard[109] > 1):
-			print(next.BoardObject.bitVectorBoard[109])
-			print("NoProgressCount: " + str(next.BoardObject.NoProgressCount))
-			raise ValueError("şejgşj")
-
 		#If pawn moves, Set No Progress Count back to 0
 		if pieceNotationBeforeMove[1] == "P":
 			next.BoardObject.NoProgressCount = 0
