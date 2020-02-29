@@ -19,7 +19,7 @@ batch_size = 256
 gamma = 1 		#1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.1	#minimum exploration rate
-eps_decay = 0.001 #higher decay means faster reduction of exploration rate
+eps_decay = 0.005 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 10000 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 60 #Assuming  players will make 100 moves at most per game (includes both sides)
@@ -53,7 +53,7 @@ def train(policy_net, target_net):
 			if not terminal: 
 				em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
-
+			
 				#We don't know what the reward will be until the game ends. So put 0 for now.
 				state = state.unsqueeze(0)
 				next_state = next_state.unsqueeze(0)
@@ -71,6 +71,7 @@ def train(policy_net, target_net):
 			if not terminal: 
 				em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net, agent, device)	#white makes his move
 				next_state = em.get_state()
+				
 				gem = deepcopy(em)
 				next_state_av_acts = gem.calculate_available_actions("white")
 				#We don't know what the reward will be until the game ends. So put 0 for now.

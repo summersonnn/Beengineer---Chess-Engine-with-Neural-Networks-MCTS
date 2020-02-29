@@ -78,6 +78,8 @@ class MiniChess():
 		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
 		self.available_actions = []
 		self.checkedby = 0
+		self.NoProgressCount = 0
+		self.MoveCount = 0
 		self.device = device
 
 	#Tahtayı başlangıç pozisyonuna getirir. Sonuç olarak, state number'ı döndürür.
@@ -157,6 +159,8 @@ class MiniChess():
 		self.BlackPieceList = [King("black", 0, 1), Pawn("black", 1, 0), Pawn("black", 1, 1), Pawn("black", 1, 2), Rook("black", 0, 0), Rook("black", 0, 2)]
 		self.available_actions = []
 		self.checkedby = 0
+		self.NoProgressCount = 0
+		self.MoveCount = 0
 		return None
 
 	#At the moment, runs for user movements. Engine moves use InitializeTree Function in mcts.py which returns best child(continuation) of given state

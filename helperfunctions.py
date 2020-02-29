@@ -43,12 +43,12 @@ def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoPr
 					place_rewards(tempMemory, 1)  	#Place 1 into the reward section of namedtuples in the tempMemory if it's training
 
 	elif not terminal:
-		if em.bitVectorBoard[108] >= 30:
+		if em.NoProgressCount >= 30:
 			terminal = True
 			print("Draw by no progress!")
 			drawByNoProgress += 1
 			
-		elif em.bitVectorBoard[109] >= 60:
+		elif em.MoveCount >= 60:
 			terminal = True
 			print("Draw by toooooo long game!")
 			drawByTooLongGame += 1
@@ -60,12 +60,12 @@ def check_game_termination(em, color, terminal, whiteWins, blackWins, drawByNoPr
 	return terminal, whiteWins, blackWins, drawByNoProgress, drawByTooLongGame, drawByStaleMate, tempMemory
 
 def learning_rate_calculator(episode):
+	if episode < 100:
+		return 0.1
 	if episode < 1000:
-		return 0.2
-	if episode < 5000:
-		return 0.02
+		return 0.01
 	else:
-		return 0.002
+		return 0.001
 
 def get_user_move(em, color):
 	userInput = input("What's your move? (Type it like a2a3)")

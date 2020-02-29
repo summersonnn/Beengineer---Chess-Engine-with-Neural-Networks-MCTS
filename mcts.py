@@ -5,6 +5,7 @@ import hashlib
 import argparse
 import timeit
 import minichess as mic
+import normalizer
 import actionsdefined as ad
 from copy import copy, deepcopy
 
@@ -16,6 +17,7 @@ EXPAND_NUMBER = 3
 class State():
 	inv_actions = {v: k for k, v in ad.actions.items()}
 	node_count = 0
+	nz = normalizer.MinMaxNormalizer(0,30,0,60)
 
 	def __init__(self, BoardObject, color):
 		self.leftActions = deepcopy(BoardObject.available_actions)	#Actions that are not used to spawn a child. Initialized same as avActs but will be changed when a child is spawned
@@ -59,11 +61,19 @@ class State():
 		next.BoardObject.bitVectorBoard[oldcoorBit] = 0
 
 		#Increase No Progress count and move count, if there is progress it will be set to zero in the upcoming lines
-		next.BoardObject.bitVectorBoard[108] += 1
-		next.BoardObject.bitVectorBoard[109] += 1
+		next.BoardObject.NoProgressCount += 1
+		next.BoardObject.MoveCount += 1
+		next.BoardObject.bitVectorBoard[108] = State.nz.normalizeNoProgress(next.BoardObject.NoProgressCount)
+		next.BoardObject.bitVectorBoard[109] = State.nz.normalizeMoveCount(next.BoardObject.MoveCount)
+
+		if (next.BoardObject.bitVectorBoard[109] > 1):
+			print(next.BoardObject.bitVectorBoard[109])
+			print("NoProgressCount: " + str(next.BoardObject.NoProgressCount))
+			raise ValueError("şejgşj")
 
 		#If pawn moves, Set No Progress Count back to 0
 		if pieceNotationBeforeMove[1] == "P":
+			next.BoardObject.NoProgressCount = 0
 			next.BoardObject.bitVectorBoard[108] = 0	
 
 		#Arrange the notation of the piece after move in case of promotion. Also check if there is a promotion.
@@ -80,6 +90,7 @@ class State():
 			capturedPieceBit = mic.coorToBitVector(int(current_action[2]), int(current_action[3]), capturedPieceNotation)
 			next.BoardObject.bitVectorBoard[capturedPieceBit] = 0
 			next.BoardObject.removeCapturedPiece(capturedPieceBit, enemyList)
+			next.BoardObject.NoProgressCount = 0
 			next.BoardObject.bitVectorBoard[108] = 0
 			
 
@@ -109,7 +120,7 @@ class State():
 		return next
 
 	def terminal(self):
-		if self.BoardObject.bitVectorBoard[108] >= 30 or self.BoardObject.bitVectorBoard[109] >= 60 or self.numberOfMoves == 0:
+		if self.BoardObject.NoProgressCount >= 30 or self.BoardObject.MoveCount >= 60 or self.numberOfMoves == 0:
 			return True
 		return False
 
