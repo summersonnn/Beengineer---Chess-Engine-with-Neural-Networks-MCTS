@@ -372,21 +372,21 @@ class Pawn():
 	
 		if self.color == "black":
 			#Bir altındakinin (önü) kontrolü
-			if theboard[self.X + 1][self.Y] == "XX" and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X+1, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y, "-K") in checkDirectThreats):
+			if theboard[self.X + 1][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+1, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y, "-K") in checkDirectThreats):
 				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + (self.notation[1] if self.X != 4 else "=R")
 				available_actions.append(ad.actions[action_string])
 				#Başlangıçta iki ileri gidebilme kontrolü
-				if self.X == 1 and theboard[self.X + 2][self.Y] == "XX" and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X + 2, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X + 2, self.Y, "-K") in checkDirectThreats):
+				if self.X == 1 and theboard[self.X + 2][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X + 2, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X + 2, self.Y, "-K") in checkDirectThreats):
 					action_string = str(self.X) + str(self.Y) + str(self.X + 2) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 			#Sol altındakinin kontrolü
-			if 	self.Y > 0 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X+1, self.Y-1)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y - 1, "-K") in checkDirectThreats):
+			if 	self.Y > 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+1, self.Y-1)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y - 1, "-K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X + 1, self.Y - 1, "+K"))
 				if theboard[self.X + 1][self.Y - 1][0] == "+":
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + (self.notation[1] if self.X != 4 else "=R")
 					available_actions.append(ad.actions[action_string])
 			#Sağ altındakinin kontrolü
-			if 	self.Y < 2 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X+1, self.Y+1)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y + 1, "-K") in checkDirectThreats):
+			if 	self.Y < 2 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+1, self.Y+1)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y + 1, "-K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X + 1, self.Y + 1, "+K"))
 				if theboard[self.X + 1][self.Y + 1][0] == "+":
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + (self.notation[1] if self.X != 4 else "=R")
@@ -394,21 +394,21 @@ class Pawn():
 			
 		else:	#White
 			#Bir üsttekinin (önü) kontrolü
-			if theboard[self.X - 1][self.Y] == "XX" and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X-1, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y, "+K") in checkDirectThreats):
+			if theboard[self.X - 1][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-1, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y, "+K") in checkDirectThreats):
 				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y) + (self.notation[1] if self.X != 1 else "=R")
 				available_actions.append(ad.actions[action_string])
 				#Başlangıçta iki ileri gidebilme kontrolü
-				if self.X == 4 and theboard[self.X - 2][self.Y] == "XX" and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X - 2, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X - 2, self.Y, "+K") in checkDirectThreats):
+				if self.X == 4 and theboard[self.X - 2][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X - 2, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X - 2, self.Y, "+K") in checkDirectThreats):
 					action_string = str(self.X) + str(self.Y) + str(self.X - 2) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
 			#Sol üsttekinin kontrolü
-			if 	self.Y > 0 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X-1, self.Y-1)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y - 1, "+K") in checkDirectThreats):
+			if 	self.Y > 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-1, self.Y-1)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y - 1, "+K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X - 1, self.Y - 1, "-K"))
 				if theboard[self.X - 1][self.Y - 1][0] == "-":
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + (self.notation[1] if self.X != 1 else "=R")
 					available_actions.append(ad.actions[action_string])
 			#Sağ üsttekinin kontrolü
-			if 	self.Y < 2 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X-1, self.Y+1)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y + 1, "+K") in checkDirectThreats):
+			if 	self.Y < 2 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-1, self.Y+1)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y + 1, "+K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X - 1, self.Y + 1, "-K"))
 				if theboard[self.X - 1][self.Y + 1][0] == "-":
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + (self.notation[1] if self.X != 1 else "=R")
@@ -418,70 +418,6 @@ class Pawn():
 			return threated_bits
 		#else
 		return available_actions
-
-	#Checks if we're unable to move to the canditate destination because of a pin
-	def IsOkayForKingSafety(self, theboard, FriendlyKing, candidateX, candidateY):
-		DistanceVertical = self.X - FriendlyKing.X
-		DistanceHorizontal = self.Y - FriendlyKing.Y
-		isXGreaterThanKing = 1 if DistanceVertical > 0 else -1
-		isYGreaterThanKing = 1 if DistanceHorizontal > 0 else -1
-		slope = DistanceVertical / DistanceHorizontal if DistanceHorizontal != 0 else 10
-
-		if slope == 0:
-			targetY = FriendlyKing.Y
-			while True:
-				targetY += isYGreaterThanKing
-				#If we're out of board
-				if targetY > 2 or targetY < 0:
-					return True
-				#If it is empty, pass
-				if theboard[self.X][targetY] == "XX":
-					continue
-				#If there is a piece between current piece and king, then there is no pin which means it's safe to move
-				if (targetY < self.Y and isYGreaterThanKing == 1 or targetY > self.Y and isYGreaterThanKing == -1) and theboard[self.X][targetY] != "XX":
-					return True
-				#Pass the current piece
-				if (targetY == self.Y):
-					continue
-				#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
-				if theboard[self.X][targetY][0] == "+" and self.color == "white" or theboard[self.X][targetY][0] == "-" and self.color == "black":
-					return True
-				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
-				else:
-					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
-						return False
-					else:
-						return True
-
-		elif slope == 10:
-			targetX = FriendlyKing.X
-			while True:
-				targetX += isXGreaterThanKing
-				#If we're out of board
-				if targetX > 5 or targetX < 0:
-					return True
-				#If it is empty, pass
-				if theboard[targetX][self.Y] == "XX":
-					continue
-				#If there is a piece between current piece and king, then there is no pin which means it's safe to move
-				if (targetX < self.X and isXGreaterThanKing == 1 or targetX > self.X and isXGreaterThanKing == -1) and theboard[targetX][self.Y] != "XX":
-					return True
-				#Pass the current piece
-				if (targetX == self.X):
-					continue
-				#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
-				if theboard[targetX][self.Y][0] == "+" and self.color == "white" or theboard[targetX][self.Y][0] == "-" and self.color == "black":
-					return True
-				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
-				else:
-					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[targetX][self.Y][1] == "R" and not isInBetween(targetX, self.Y, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
-						return False
-					else:
-						return True
-		else:
-			return True
 
 class Rook():
 	class_counter = 0
@@ -525,7 +461,7 @@ class Rook():
 		leftFlag = True
 		for i in range (1,3):
 			#Right - About the condition with abs: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if rightFlag and self.Y + i < 3 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X, self.Y+i)) and (not IsForCheck or (checkInX and	abs(self.Y - EnemyKingY) >= abs(self.Y + i - EnemyKingY))) and (checkDirectThreats == None or coorToBitVector(self.X, self.Y + i, "-K" if self.color == "black" else "+K") in checkDirectThreats):
+			if rightFlag and self.Y + i < 3 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X, self.Y+i)) and (not IsForCheck or (checkInX and	abs(self.Y - EnemyKingY) >= abs(self.Y + i - EnemyKingY))) and (checkDirectThreats == None or coorToBitVector(self.X, self.Y + i, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X][self.Y + i] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
@@ -548,7 +484,7 @@ class Rook():
 					if not IsForCheck: threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K")) 
 					
 			#Left - About the condition with abs: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if leftFlag and self.Y - i >= 0 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X, self.Y-i)) and (not IsForCheck or (checkInX and	abs(self.Y - EnemyKingY) >= abs(self.Y - i - EnemyKingY))) and (checkDirectThreats == None or coorToBitVector(self.X, self.Y - i, "-K" if self.color == "black" else "+K") in checkDirectThreats):
+			if leftFlag and self.Y - i >= 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X, self.Y-i)) and (not IsForCheck or (checkInX and	abs(self.Y - EnemyKingY) >= abs(self.Y - i - EnemyKingY))) and (checkDirectThreats == None or coorToBitVector(self.X, self.Y - i, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X][self.Y - i] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - i) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
@@ -576,7 +512,7 @@ class Rook():
 		downFlag = True
 		for i in range (1,6):
 			#Down - About the last condition: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if downFlag and self.X + i < 6 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X+i, self.Y)) and (not IsForCheck or (checkInY and abs(self.X - EnemyKingX) >= abs(self.X + i - EnemyKingX))) and (checkDirectThreats == None or coorToBitVector(self.X+i, self.Y, "-K" if self.color == "black" else "+K") in checkDirectThreats):
+			if downFlag and self.X + i < 6 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+i, self.Y)) and (not IsForCheck or (checkInY and abs(self.X - EnemyKingX) >= abs(self.X + i - EnemyKingX))) and (checkDirectThreats == None or coorToBitVector(self.X+i, self.Y, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X + i][self.Y] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X + i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
@@ -599,7 +535,7 @@ class Rook():
 					if not IsForCheck: threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
 					
 			#Up - About the last condition: Whenever IsForCheck is True, We ONLY want the bits from Rook to King, not opposite direction
-			if upFlag and self.X - i >= 0 and (IsForCalculatingThreats or self.IsOkayForKingSafety(theboard, FriendlyKing, self.X-i, self.Y)) and (not IsForCheck or (checkInY and abs(self.X - EnemyKingX) >= abs(self.X - i - EnemyKingX))) and (checkDirectThreats == None or coorToBitVector(self.X-i, self.Y, "-K" if self.color == "black" else "+K") in checkDirectThreats):
+			if upFlag and self.X - i >= 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-i, self.Y)) and (not IsForCheck or (checkInY and abs(self.X - EnemyKingX) >= abs(self.X - i - EnemyKingX))) and (checkDirectThreats == None or coorToBitVector(self.X-i, self.Y, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X - i][self.Y] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X - i) + str(self.Y) + self.notation[1]
 					available_actions.append(ad.actions[action_string])
@@ -664,71 +600,6 @@ class Rook():
 				elif downFlag and (self.X + i > 5 or theboard[self.X + i][self.Y] != "XX"):
 					downFlag = False
 
-
-	#Checks if we're unable to move to the canditate destination because of a pin
-	def IsOkayForKingSafety(self, theboard, FriendlyKing, candidateX, candidateY):
-		DistanceVertical = self.X - FriendlyKing.X
-		DistanceHorizontal = self.Y - FriendlyKing.Y
-		isXGreaterThanKing = 1 if DistanceVertical > 0 else -1
-		isYGreaterThanKing = 1 if DistanceHorizontal > 0 else -1
-		slope = DistanceVertical / DistanceHorizontal if DistanceHorizontal != 0 else 10
-
-		if slope == 0:
-			targetY = FriendlyKing.Y
-			while True:
-				targetY += isYGreaterThanKing
-				#If we're out of board
-				if targetY > 2 or targetY < 0:
-					return True
-				#If it is empty, pass
-				if theboard[self.X][targetY] == "XX":
-					continue
-				#If there is a piece between current piece and king, then there is no pin which means it's safe to move
-				if (targetY < self.Y and isYGreaterThanKing == 1 or targetY > self.Y and isYGreaterThanKing == -1) and theboard[self.X][targetY] != "XX":
-					return True
-				#Pass the current piece
-				if (targetY == self.Y):
-					continue
-				#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
-				if theboard[self.X][targetY][0] == "+" and self.color == "white" or theboard[self.X][targetY][0] == "-" and self.color == "black":
-					return True
-				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
-				else:
-					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[self.X][targetY][1] == "R" and not isInBetween(self.X, targetY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
-						return False
-					else:
-						return True
-
-		elif slope == 10:
-			targetX = FriendlyKing.X
-			while True:
-				targetX += isXGreaterThanKing
-				#If we're out of board
-				if targetX > 5 or targetX < 0:
-					return True
-				#If it is empty, pass
-				if theboard[targetX][self.Y] == "XX":
-					continue
-				#If there is a piece between current piece and king, then there is no pin which means it's safe to move
-				if (targetX < self.X and isXGreaterThanKing == 1 or targetX > self.X and isXGreaterThanKing == -1) and theboard[targetX][self.Y] != "XX":
-					return True
-				#Pass the current piece
-				if (targetX == self.X):
-					continue
-				#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
-				if theboard[targetX][self.Y][0] == "+" and self.color == "white" or theboard[targetX][self.Y][0] == "-" and self.color == "black":
-					return True
-				#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
-				else:
-					#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-					if theboard[targetX][self.Y][1] == "R" and not isInBetween(targetX, self.Y, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
-						return False
-					else:
-						return True
-		else:
-			return True
-
 def coorToBitVector(x, y, notation):
 		coor = x*3 + y
 		if notation == "-K":
@@ -755,8 +626,6 @@ def isInBetween(op1x, op1y, op2x, op2y, inx, iny):
 		return False
 
 	if IsSameX:
-		'''if abs(op1y - op2y) > abs(op1y - iny):
-			return True'''
 		if inx == op2x:	#or inx == op1x
 			return True
 		return False
@@ -764,6 +633,70 @@ def isInBetween(op1x, op1y, op2x, op2y, inx, iny):
 		if iny == op2y:	#or iny == op1y
 			return True
 		return False
+
+#Checks if we're unable to move to the canditate destination because of a pin
+def IsOkayForKingSafety(OwnX, OwnY, OwnColor, theboard, FriendlyKing, candidateX, candidateY):
+	DistanceVertical = OwnX - FriendlyKing.X
+	DistanceHorizontal = OwnY - FriendlyKing.Y
+	isXGreaterThanKing = 1 if DistanceVertical > 0 else -1
+	isYGreaterThanKing = 1 if DistanceHorizontal > 0 else -1
+	slope = DistanceVertical / DistanceHorizontal if DistanceHorizontal != 0 else 10
+
+	if slope == 0:
+		targetY = FriendlyKing.Y
+		while True:
+			targetY += isYGreaterThanKing
+			#If we're out of board
+			if targetY > 2 or targetY < 0:
+				return True
+			#If it is empty, pass
+			if theboard[OwnX][targetY] == "XX":
+				continue
+			#If there is a piece between current piece and king, then there is no pin which means it's safe to move
+			if (targetY < OwnY and isYGreaterThanKing == 1 or targetY > OwnY and isYGreaterThanKing == -1) and theboard[OwnX][targetY] != "XX":
+				return True
+			#Pass the current piece
+			if (targetY == OwnY):
+				continue
+			#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
+			if theboard[OwnX][targetY][0] == "+" and OwnColor == "white" or theboard[OwnX][targetY][0] == "-" and OwnColor == "black":
+				return True
+			#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
+			else:
+				#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
+				if theboard[OwnX][targetY][1] == "R" and not isInBetween(OwnX, targetY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
+					return False
+				else:
+					return True
+
+	elif slope == 10:
+		targetX = FriendlyKing.X
+		while True:
+			targetX += isXGreaterThanKing
+			#If we're out of board
+			if targetX > 5 or targetX < 0:
+				return True
+			#If it is empty, pass
+			if theboard[targetX][OwnY] == "XX":
+				continue
+			#If there is a piece between current piece and king, then there is no pin which means it's safe to move
+			if (targetX < OwnX and isXGreaterThanKing == 1 or targetX > OwnX and isXGreaterThanKing == -1) and theboard[targetX][OwnY] != "XX":
+				return True
+			#Pass the current piece
+			if (targetX == OwnX):
+				continue
+			#If the first piece on the way is friendly (from piece to opposite direction of king), then it's safe
+			if theboard[targetX][OwnY][0] == "+" and OwnColor == "white" or theboard[targetX][OwnY][0] == "-" and OwnColor == "black":
+				return True
+			#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
+			else:
+				#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
+				if theboard[targetX][OwnY][1] == "R" and not isInBetween(targetX, OwnY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
+					return False
+				else:
+					return True
+	else:
+		return True
 
 
 
