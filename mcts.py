@@ -110,6 +110,7 @@ class State():
 		next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
 		next.leftActions = deepcopy(next.BoardObject.available_actions)
 		next.numberOfMoves = len(next.leftActions)
+		print(next.BoardObject.bitVectorBoard)
 
 		return next
 

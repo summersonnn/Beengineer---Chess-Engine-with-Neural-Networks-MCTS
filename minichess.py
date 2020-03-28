@@ -599,6 +599,7 @@ class Rook():
 					return True
 				elif downFlag and (self.X + i > 5 or theboard[self.X + i][self.Y] != "XX"):
 					downFlag = False
+		return False
 
 def coorToBitVector(x, y, notation):
 		coor = x*3 + y
@@ -619,7 +620,7 @@ def coorToBitVector(x, y, notation):
 #1st pair is enemy piece
 #2nd pair is friendlyking
 #3rd pair is candidate 
-def isInBetween(op1x, op1y, op2x, op2y, inx, iny):
+def isKeepingPin(op1x, op1y, op2x, op2y, inx, iny):
 
 	IsSameX = True if op1x == op2x else False
 	IsSameY = True if op1y == op2y else False
@@ -627,13 +628,13 @@ def isInBetween(op1x, op1y, op2x, op2y, inx, iny):
 	if IsSameX == False and IsSameY == False:
 		return False
 
-	#Aynı yataydalarsa
+	#Aynı yataydalarsa (Yatay pin)
 	if IsSameX:
 		#Aynı yatayda kalmaya devam ediyorsa, sıkıntı yok
 		if inx == op2x:	#or inx == op1x
 			return True
 		return False
-	#Aynı dikeydelerse
+	#Aynı dikeydelerse (Dikey pin)
 	if IsSameY:
 		#Aynı dikeyde kalmaya devam ediyorsa, sıkıntı yok
 		if iny == op2y:	#or iny == op1y
@@ -670,7 +671,7 @@ def IsOkayForKingSafety(OwnX, OwnY, OwnColor, theboard, FriendlyKing, candidateX
 			#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 			else:
 				#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-				if theboard[OwnX][targetY][1] == "R" and not isInBetween(OwnX, targetY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
+				if theboard[OwnX][targetY][1] == "R" and not isKeepingPin(OwnX, targetY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
 					return False
 				else:
 					return True
@@ -697,7 +698,7 @@ def IsOkayForKingSafety(OwnX, OwnY, OwnColor, theboard, FriendlyKing, candidateX
 			#There is an enemy piece on the way! There MAY be a pin. Check the enemy piece.
 			else:
 				#If it is an enemy rook, then we are in pin. Add Queen here when switched to full board.
-				if theboard[targetX][OwnY][1] == "R" and not isInBetween(targetX, OwnY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
+				if theboard[targetX][OwnY][1] == "R" and not isKeepingPin(targetX, OwnY, FriendlyKing.X, FriendlyKing.Y, candidateX, candidateY):
 					return False
 				else:
 					return True
