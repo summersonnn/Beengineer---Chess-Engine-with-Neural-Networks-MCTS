@@ -616,7 +616,9 @@ def coorToBitVector(x, y, notation):
 			return coor + 90
 
 #Decides if the given square is in between of other given 2 squares
-#For now, calculates only for straight lines. Add diagonals when bishop added.
+#1st pair is enemy piece
+#2nd pair is friendlyking
+#3rd pair is candidate 
 def isInBetween(op1x, op1y, op2x, op2y, inx, iny):
 
 	IsSameX = True if op1x == op2x else False
@@ -625,11 +627,15 @@ def isInBetween(op1x, op1y, op2x, op2y, inx, iny):
 	if IsSameX == False and IsSameY == False:
 		return False
 
+	#Aynı yataydalarsa
 	if IsSameX:
+		#Aynı yatayda kalmaya devam ediyorsa, sıkıntı yok
 		if inx == op2x:	#or inx == op1x
 			return True
 		return False
+	#Aynı dikeydelerse
 	if IsSameY:
+		#Aynı dikeyde kalmaya devam ediyorsa, sıkıntı yok
 		if iny == op2y:	#or iny == op1y
 			return True
 		return False
