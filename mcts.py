@@ -176,11 +176,12 @@ class Node():
 				#action = traversedState.BoardObject.available_actions[randomIndex]
 				#If strategy is not None, it's Training, if it is None, it's Testing
 				if agent.strategy != None:
-					action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, False)
+					action = random.choice(traversedState.BoardObject.available_actions) 
+					#action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, False)
 				else:
 					action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, True)
 					
-				action = action.item()
+				#action = action.item()
 				traversedState = traversedState.next_state(action, True)
 				
 			reward = traversedState.reward()
