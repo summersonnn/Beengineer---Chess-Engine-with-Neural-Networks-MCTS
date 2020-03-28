@@ -163,20 +163,21 @@ class MiniChess():
 		behindKingBit = []
 
 		#Check for enemy pawns. If we're at the last enemy rank, no enemy pawn can give a check
+		#We're both putting the bit of the pawn and the king that is being threatened. Latter is not necessary for removing the check, but necessary for understanding that we're in check.
 		if color == "black" and OurKingX != 5:
 			if 	OurKingY > 0 and self.board[OurKingX + 1][OurKingY - 1] == "+P":
-				checkedBy += 1
 				DirectThreatedBits.append(coorToBitVector(OurKingX + 1, OurKingY - 1, "-K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX, OurKingY, "-K"))
 			if OurKingY < 2 and self.board[OurKingX + 1][OurKingY + 1] == "+P":
-				checkedBy += 1
 				DirectThreatedBits.append(coorToBitVector(OurKingX + 1, OurKingY + 1, "-K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX, OurKingY, "-K"))
 		if color == "white" and OurKingX != 0:
-			if 	OurKingY > 0 and self.board[OurKingX - 1][OurKingY - 1] == "-P": 
-				checkedBy += 1
+			if 	OurKingY > 0 and self.board[OurKingX - 1][OurKingY - 1] == "-P":
 				DirectThreatedBits.append(coorToBitVector(OurKingX - 1, OurKingY - 1, "+K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX, OurKingY, "+K"))
 			if OurKingY < 2 and self.board[OurKingX - 1][OurKingY + 1] == "-P":
-				checkedBy += 1
 				DirectThreatedBits.append(coorToBitVector(OurKingX - 1, OurKingY + 1, "+K"))
+				DirectThreatedBits.append(coorToBitVector(OurKingX, OurKingY, "+K"))
 
 		#Check for king rank and king file for enemy rook. Rook only returns the threated bits from Rook to King, not opposite direction
 		for i in enemyList:

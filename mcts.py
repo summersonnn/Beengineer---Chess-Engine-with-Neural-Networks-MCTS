@@ -106,7 +106,6 @@ class State():
 			next.BoardObject.removeCapturedPiece(oldcoorBit, friendList)
 
 		next.build_exclusive_string()	#New exclusive string is constructed, ready for being hashed
-		
 		next.checkedby, checkDirectThreats, checkAllThreats = next.BoardObject.IsCheck(next.color)
 		next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
 		next.leftActions = deepcopy(next.BoardObject.available_actions)
