@@ -6,7 +6,8 @@ import argparse
 import timeit
 import minichess as mic
 import normalizer
-import actionsdefined as ad
+import zwhiteactions as zw
+import zblackactions as zb
 from copy import copy, deepcopy
 
 
@@ -15,7 +16,8 @@ SCALAR=2
 EXPAND_NUMBER = 3
 
 class State():
-	inv_actions = {v: k for k, v in ad.actions.items()}
+	White_inv_actions = {v: k for k, v in zw.actions.items()}
+	Black_inv_actions = {v: k for k, v in zb.actions.items()}
 	node_count = 0
 	nz = normalizer.MinMaxNormalizer(0,30,0,60)
 
@@ -39,7 +41,7 @@ class State():
 		State.node_count += 1
 		next = deepcopy(self)
 		next.color = "white" if self.color == "black" else "black"
-
+		
 		#Selection action when expanding the tree.
 		#Deleting the action that is already used to spawned a child. 
 		#Original actions will be left in self.availableActions.
@@ -49,11 +51,12 @@ class State():
 				next.createdByThisAction = action
 				del self.leftActions[0]
 			#Converting action Scalar to String Format
-			current_action = State.inv_actions[action]
+			current_action = State.White_inv_actions[action] if self.color == "white" else State.Black_inv_actions[action]
 		#If the move was played by human
 		else:
 			current_action = user_action
 
+		
 		#Get notation before move and current coorbit, empty the squre piece will be moved from, put zero to old coorbit position
 		pieceNotationBeforeMove = self.BoardObject.board[int(current_action[0])][int(current_action[1])]	#e.g "+P"
 		oldcoorBit = mic.coorToBitVector(int(current_action[0]), int(current_action[1]), pieceNotationBeforeMove) #e.g 30
@@ -110,8 +113,7 @@ class State():
 		next.BoardObject.calculate_available_actions(next.color, False, next.checkedby, checkDirectThreats, checkAllThreats)
 		next.leftActions = deepcopy(next.BoardObject.available_actions)
 		next.numberOfMoves = len(next.leftActions)
-		print(next.BoardObject.bitVectorBoard)
-
+		
 		return next
 
 	def terminal(self):
@@ -177,12 +179,12 @@ class Node():
 				#action = traversedState.BoardObject.available_actions[randomIndex]
 				#If strategy is not None, it's Training, if it is None, it's Testing
 				if agent.strategy != None:
-					action = random.choice(traversedState.BoardObject.available_actions) 
-					#action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, False)
+					#action = random.choice(traversedState.BoardObject.available_actions) 
+					action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, False)
 				else:
 					action = agent.select_action(stateTensor, traversedState.color, traversedState.BoardObject.available_actions, episode, policy_net, True)
 					
-				#action = action.item()
+				action = action.item()
 				traversedState = traversedState.next_state(action, True)
 				
 			reward = traversedState.reward()

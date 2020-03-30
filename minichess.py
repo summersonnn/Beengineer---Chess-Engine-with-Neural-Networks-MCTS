@@ -1,7 +1,8 @@
 import random
 from copy import copy, deepcopy
 import torch
-import actionsdefined as ad
+import zwhiteactions as zw
+import zblackactions as zb
 import mcts
 
 #MiniChess class'ı Board'ı temsil eder. 
@@ -229,7 +230,7 @@ class MiniChess():
 		#But if we are in check, threated squares are already coming as parameter, we use it.
 		if checkedBy > 0:
 			ThreatedSquares = checkAllThreats
-		
+
 		if forColor == "white":
 			available_actions += self.WhitePieceList[0].possibleActions(self.board, ThreatedSquares, IsForCalculatingThreats)
 			#If we're in check from multiple enemy pieces, we have to move the king so we don't have to calculate av.act. of other pieces
@@ -290,52 +291,52 @@ class King():
 			threated_bits.append( coorToBitVector(self.X - 1, self.Y, "+K" if self.color == "black" else "-K") )
 			if theboard[self.X - 1][self.Y][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y][0] != "-" and self.color == "black":
 				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 3) not in ThreatedSquares else None
+				available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard - 3) not in ThreatedSquares else None
 		#Sağ Kontrol
 		if 	self.Y < 2:
 			right = True
 			threated_bits.append( coorToBitVector(self.X, self.Y + 1, "+K" if self.color == "black" else "-K") )
 			if theboard[self.X][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X][self.Y + 1][0] != "-" and self.color == "black":
 				action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + 1) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 1) not in ThreatedSquares else None
+				available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard + 1) not in ThreatedSquares else None
 			#Sag-ust
 			if self.X > 0:
 				threated_bits.append( coorToBitVector(self.X - 1, self.Y + 1, "+K" if self.color == "black" else "-K") )
 				if theboard[self.X - 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y + 1][0] != "-" and self.color == "black":
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 2) not in ThreatedSquares else None
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard - 2) not in ThreatedSquares else None
 		#Alt Kontrol
 		if 	self.X < 5:
 			bottom = True
 			threated_bits.append( coorToBitVector(self.X + 1, self.Y, "+K" if self.color == "black" else "-K") )
 			if theboard[self.X + 1][self.Y][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y][0] != "-" and self.color == "black":
 				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 3) not in ThreatedSquares else None
+				available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard + 3) not in ThreatedSquares else None
 			#Sag-alt
 			if self.Y < 2:
 				threated_bits.append( coorToBitVector(self.X + 1, self.Y + 1, "+K" if self.color == "black" else "-K") )
 				if theboard[self.X + 1][self.Y + 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y + 1][0] != "-" and self.color == "black":	
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 4) not in ThreatedSquares else None
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard + 4) not in ThreatedSquares else None
 		#Sol Kontrol
 		if 	self.Y > 0:
 			left = True
 			threated_bits.append( coorToBitVector(self.X, self.Y - 1, "+K" if self.color == "black" else "-K") )
 			if theboard[self.X][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X][self.Y - 1][0] != "-" and self.color == "black":
 				action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - 1) + str(self.notation[1])
-				available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 1) not in ThreatedSquares else None
+				available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard - 1) not in ThreatedSquares else None
 			#Sol-üst	
 			if self.X > 0:
 				threated_bits.append( coorToBitVector(self.X - 1, self.Y - 1, "+K" if self.color == "black" else "-K") )
 				if theboard[self.X - 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X - 1][self.Y - 1][0] != "-" and self.color == "black":		
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard - 4) not in ThreatedSquares else None
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard - 4) not in ThreatedSquares else None
 			#Sol-alt
 			if self.X < 5 :
 				threated_bits.append( coorToBitVector(self.X + 1, self.Y - 1, "+K" if self.color == "black" else "-K") )
 				if theboard[self.X + 1][self.Y - 1][0] != "+" and self.color == "white" or theboard[self.X + 1][self.Y - 1][0] != "-" and self.color == "black":		
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + str(self.notation[1])
-					available_actions.append(ad.actions[action_string]) if (self.BitonBoard + 2) not in ThreatedSquares else None
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string]) if (self.BitonBoard + 2) not in ThreatedSquares else None
 
 		return threated_bits if IsForCalculatingThreats else available_actions
 
@@ -374,45 +375,45 @@ class Pawn():
 			#Bir altındakinin (önü) kontrolü
 			if theboard[self.X + 1][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+1, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y, "-K") in checkDirectThreats):
 				action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y) + (self.notation[1] if self.X != 4 else "=R")
-				available_actions.append(ad.actions[action_string])
+				available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 				#Başlangıçta iki ileri gidebilme kontrolü
 				if self.X == 1 and theboard[self.X + 2][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X + 2, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X + 2, self.Y, "-K") in checkDirectThreats):
 					action_string = str(self.X) + str(self.Y) + str(self.X + 2) + str(self.Y) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 			#Sol altındakinin kontrolü
 			if 	self.Y > 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+1, self.Y-1)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y - 1, "-K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X + 1, self.Y - 1, "+K"))
 				if theboard[self.X + 1][self.Y - 1][0] == "+":
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y - 1) + (self.notation[1] if self.X != 4 else "=R")
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 			#Sağ altındakinin kontrolü
 			if 	self.Y < 2 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+1, self.Y+1)) and (checkDirectThreats == None or coorToBitVector(self.X + 1, self.Y + 1, "-K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X + 1, self.Y + 1, "+K"))
 				if theboard[self.X + 1][self.Y + 1][0] == "+":
 					action_string = str(self.X) + str(self.Y) + str(self.X + 1) + str(self.Y + 1) + (self.notation[1] if self.X != 4 else "=R")
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 			
 		else:	#White
 			#Bir üsttekinin (önü) kontrolü
 			if theboard[self.X - 1][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-1, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y, "+K") in checkDirectThreats):
 				action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y) + (self.notation[1] if self.X != 1 else "=R")
-				available_actions.append(ad.actions[action_string])
+				available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 				#Başlangıçta iki ileri gidebilme kontrolü
 				if self.X == 4 and theboard[self.X - 2][self.Y] == "XX" and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X - 2, self.Y)) and (checkDirectThreats == None or coorToBitVector(self.X - 2, self.Y, "+K") in checkDirectThreats):
 					action_string = str(self.X) + str(self.Y) + str(self.X - 2) + str(self.Y) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 			#Sol üsttekinin kontrolü
 			if 	self.Y > 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-1, self.Y-1)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y - 1, "+K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X - 1, self.Y - 1, "-K"))
 				if theboard[self.X - 1][self.Y - 1][0] == "-":
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y - 1) + (self.notation[1] if self.X != 1 else "=R")
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 			#Sağ üsttekinin kontrolü
 			if 	self.Y < 2 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-1, self.Y+1)) and (checkDirectThreats == None or coorToBitVector(self.X - 1, self.Y + 1, "+K") in checkDirectThreats):
 				threated_bits.append(coorToBitVector(self.X - 1, self.Y + 1, "-K"))
 				if theboard[self.X - 1][self.Y + 1][0] == "-":
 					action_string = str(self.X) + str(self.Y) + str(self.X - 1) + str(self.Y + 1) + (self.notation[1] if self.X != 1 else "=R")
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 	
 		if IsForCheck or IsForCalculatingThreats:
 			return threated_bits
@@ -464,12 +465,12 @@ class Rook():
 			if rightFlag and self.Y + i < 3 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X, self.Y+i)) and (not IsForCheck or (checkInX and	abs(self.Y - EnemyKingY) >= abs(self.Y + i - EnemyKingY))) and (checkDirectThreats == None or coorToBitVector(self.X, self.Y + i, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X][self.Y + i] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + i) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K"))
 
 				elif rightFlag and (self.color == "white" and theboard[self.X][self.Y + i][0] == "-" or self.color == "black" and theboard[self.X][self.Y + i][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y + i) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					rightFlag = False
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X][self.Y + i][1] == "K"  : threated_bits.append(coorToBitVector(self.X, self.Y + i, "+K" if self.color == "black" else "-K"))
@@ -487,12 +488,12 @@ class Rook():
 			if leftFlag and self.Y - i >= 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X, self.Y-i)) and (not IsForCheck or (checkInX and	abs(self.Y - EnemyKingY) >= abs(self.Y - i - EnemyKingY))) and (checkDirectThreats == None or coorToBitVector(self.X, self.Y - i, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X][self.Y - i] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - i) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X, self.Y - i, "+K" if self.color == "black" else "-K"))
 
 				elif leftFlag and (self.color == "white" and theboard[self.X][self.Y - i][0] == "-" or self.color == "black" and theboard[self.X][self.Y - i][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X) + str(self.Y - i) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					leftFlag = False
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X][self.Y - i][1] == "K" : threated_bits.append(coorToBitVector(self.X, self.Y - i, "+K" if self.color == "black" else "-K"))
@@ -515,12 +516,12 @@ class Rook():
 			if downFlag and self.X + i < 6 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X+i, self.Y)) and (not IsForCheck or (checkInY and abs(self.X - EnemyKingX) >= abs(self.X + i - EnemyKingX))) and (checkDirectThreats == None or coorToBitVector(self.X+i, self.Y, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X + i][self.Y] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X + i) + str(self.Y) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
 
 				elif downFlag and (self.color == "white" and theboard[self.X + i][self.Y][0] == "-" or self.color == "black" and theboard[self.X + i][self.Y][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X + i) + str(self.Y) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					downFlag = False
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X + i][self.Y][1] == "K" : threated_bits.append(coorToBitVector(self.X + i, self.Y, "+K" if self.color == "black" else "-K"))
@@ -538,12 +539,12 @@ class Rook():
 			if upFlag and self.X - i >= 0 and (IsForCalculatingThreats or IsOkayForKingSafety(self.X, self.Y, self.color, theboard, FriendlyKing, self.X-i, self.Y)) and (not IsForCheck or (checkInY and abs(self.X - EnemyKingX) >= abs(self.X - i - EnemyKingX))) and (checkDirectThreats == None or coorToBitVector(self.X-i, self.Y, "-K" if self.color == "black" else "+K") in checkDirectThreats):
 				if theboard[self.X - i][self.Y] == "XX":
 					action_string = str(self.X) + str(self.Y) + str(self.X - i) + str(self.Y) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					threated_bits.append(coorToBitVector(self.X - i, self.Y, "+K" if self.color == "black" else "-K"))
 
 				elif upFlag and (self.color == "white" and theboard[self.X - i][self.Y][0] == "-" or self.color == "black" and theboard[self.X - i][self.Y][0] == "+"):
 					action_string = str(self.X) + str(self.Y) + str(self.X - i) + str(self.Y) + self.notation[1]
-					available_actions.append(ad.actions[action_string])
+					available_actions.append(zw.actions[action_string] if self.color == "white" else zb.actions[action_string])
 					upFlag = False
 					#If for check threats, don't label enemy pieces as threat except the enemy king of course (from the rook)
 					if not IsForCheck or theboard[self.X - i][self.Y][1] == "K" : threated_bits.append(coorToBitVector(self.X - i, self.Y, "+K" if self.color == "black" else "-K"))

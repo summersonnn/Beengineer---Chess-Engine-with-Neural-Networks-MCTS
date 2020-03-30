@@ -17,7 +17,7 @@ class DQN(nn.Module):
 		self.fc1 = nn.Linear(in_features=110, out_features=132)
 		self.fc2 = nn.Linear(in_features=132, out_features=192)
 		self.fc3 = nn.Linear(in_features=192, out_features=216)
-		self.out = nn.Linear(in_features=216, out_features=282)
+		self.out = nn.Linear(in_features=216, out_features=251)
 
 	def forward(self, t):
 		t = F.relu(self.fc1(t))
@@ -26,26 +26,7 @@ class DQN(nn.Module):
 		t = self.out(t)
 		return t
 
-	'''def __init__(self,):
-		super(DQN, self).__init__()
-
-		self.fc1 = nn.Linear(in_features=768, out_features=384)
-		self.fc2 = nn.Linear(in_features=384, out_features=192)
-		self.fc3 = nn.Linear(in_features=192, out_features=96)
-		self.fc4 = nn.Linear(in_features=96, out_features=48)
-		self.fc5 = nn.Linear(in_features=48, out_features=24)
-		self.out = nn.Linear(in_features=24, out_features=8)
-		#In real chess, there will be 3876 possible moves, so probably 3876 neurons at the final layer
-
-	def forward(self, t):
-		t = F.relu(self.fc1(t))
-		t = F.relu(self.fc2(t))
-		t = F.relu(self.fc3(t))
-		t = F.relu(self.fc4(t))
-		t = F.relu(self.fc5(t))
-		t = self.out(t)
-		return t'''
-
+	
 Experience = namedtuple('Experience', ('state', 'action', 'next_state', 'next_state_av_acts', 'reward', 'terminal'))
 
 class ReplayMemory():
@@ -139,8 +120,8 @@ class Agent():
 		
 
 
-	def tell_me_exploration_rate(self):	#debug function to observe exploration rate during training process
-		num = self.strategy.get_exploration_rate(self.current_step)
+	def tell_me_exploration_rate(self, episode):	#debug function to observe exploration rate during training process
+		num = self.strategy.get_exploration_rate(episode)
 		return "{:.3f}".format(num)
 
 		
