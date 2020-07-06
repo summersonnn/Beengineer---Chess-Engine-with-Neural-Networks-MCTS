@@ -1,7 +1,7 @@
 import os
 import signal
 import sys
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
@@ -19,7 +19,7 @@ batch_size = 256
 gamma = 1 		#1 assumes same action always result in same rewards -> future rewards are NOT discounted
 eps_start = 1	#maximum (start) exploration rate
 eps_end = 0.1	#minimum exploration rate
-eps_decay = 0.001 #higher decay means faster reduction of exploration rate
+eps_decay = 0.002 #higher decay means faster reduction of exploration rate
 target_update = 5	#how often does target network get updated? (in terms of episode number) This will also be used in creating model files
 memory_size = 7500 #memory size to hold each state,action,next_state, reward, terminal tuple
 per_game_memory_size = 30
@@ -243,7 +243,7 @@ def train(White_policy_net, White_target_net, Black_policy_net, Black_target_net
 	print("Average Move per game: " + str(move_count / num_episodes))
 	return None
 
-def test(policy_net, policy_net_old=None, humanVsComputer=False):
+def test(policy_net_white, policy_net_black, humanVsComputer=None):
 	whiteWins = 0
 	blackWins = 0
 	drawByNoProgress = 0
@@ -269,7 +269,7 @@ def test(policy_net, policy_net_old=None, humanVsComputer=False):
 			if not terminal:
 				#Not play against computer as White
 				if humanVsComputer != "W" and humanVsComputer != "w":
-					em, action = mcts.initializeTree(em, "white", move_time, episode, policy_net, agent, device)	#white makes his move
+					em, action = mcts.initializeTree(em, "white", move_time*10, episode, policy_net_white, agent, device)	#white makes his move
 				#Play against computer as White
 				else:
 					em.print()
@@ -294,7 +294,7 @@ def test(policy_net, policy_net_old=None, humanVsComputer=False):
 			if not terminal: 
 				#Not play against computer as Black
 				if humanVsComputer != "B" and humanVsComputer != "b":
-					em, action = mcts.initializeTree(em, "black", move_time, episode, policy_net if policy_net_old is None else policy_net_old, agent, device)	#white makes his move
+					em, action = mcts.initializeTree(em, "black", move_time*10, episode, policy_net_black, agent, device)	#white makes his move
 				#Play against computer as Black
 				else:
 					em.print()
@@ -374,42 +374,49 @@ if __name__ == '__main__':
 		train(White_policy_net, White_target_net, Black_policy_net, Black_target_net)
 
 	elif (sys.argv[1]) == "test":
-		selfPlay = True
-		humanVsComputer = False
-		choice = input("Self-play for last model (S) or play against another generation? (A)?\n Play against computer as White (W) as black (B)")
+		humanVsComputer = None
+		choice = input("Play against another generation? (A)?\n Play against computer as White (W) as black (B)")
+		choice2 = ""
 
 		if choice == "A" or choice == "a":
-			selfPlay = False
 			oldgeneration_model = fileoperations.find_last_edited_file(PATH_TO_OLD_GENERATION_MODEL_DIR)
-			policy_net_old = dqn.DQN().to(device)
+			choice2 = input("Last trained model White(W) or Black(B) ?")
 
 			if oldgeneration_model is not None:
 				print("***Old Generation model: " + oldgeneration_model)
 				checkpointOld = torch.load(oldgeneration_model, map_location=device)
-				policy_net_old.load_state_dict(checkpointOld['model_state_dict'])
-				policy_net_old.eval()
+				if choice2 == 'W' or choice2 == 'w':
+					Black_policy_net.load_state_dict(checkpointOld['Black_model_state_dict'])
+				else:
+					White_policy_net.load_state_dict(checkpointOld['White_model_state_dict'])
 				del checkpointOld
 			else:
 				print("Test cannot be done due to absence of OLDMODEL weights file")
 				os.kill(os.getpid(), signal.SIGTERM)
 
 		elif choice == "W" or choice == "w" or choice == "B" or choice == "b":
-			humanVsComputer = True
+			humanVsComputer = choice
 
 		agent = dqn.Agent(None, device)	#strategy is none since epsilon greedy strategy is not required in test mode. We don't explore.
 
 		if last_trained_model is not None:
 			print("***Last trained model: " + last_trained_model)
 			checkpoint = torch.load(last_trained_model, map_location=device)
-			policy_net.load_state_dict(checkpoint['model_state_dict'])
+			#If humanVsComputer, load white and black model from last trained model.
+			#Else, load white or black from last trained model according to last model color choice (choice2)
+			if choice2 == 'W' or choice2 == 'w' or humanVsComputer != None:
+				White_policy_net.load_state_dict(checkpoint['White_model_state_dict'])
+			elif (choice2 != 'W' and choice2 != "w") or humanVsComputer != None:
+				Black_policy_net.load_state_dict(checkpoint['Black_model_state_dict'])
 			del checkpoint
 		else:
-			print("Test cannot be done due to absence of weights file")
+			print("Test cannot be done due to absence of LASTMODEL weights file")
 			os.kill(os.getpid(), signal.SIGTERM)
 
 		#Policy net should be in eval mode to avoid gradient decent in test mode.
-		policy_net.eval()
-		test(policy_net, None, choice) if humanVsComputer == True else test(policy_net, policy_net_old) if selfPlay == False else test(policy_net)
+		White_policy_net.eval()
+		Black_policy_net.eval()
+		test(White_policy_net, Black_policy_net, humanVsComputer)
 
 	#sys.exit() or raise SystemExit doesn't work for some reason. That's the only way I could end the process.
 	os.kill(os.getpid(), signal.SIGTERM)
