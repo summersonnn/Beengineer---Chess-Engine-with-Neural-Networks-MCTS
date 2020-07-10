@@ -378,6 +378,7 @@ if __name__ == '__main__':
 		choice = input("Play against another generation? (A)?\n Play against computer as White (W) as black (B)")
 		choice2 = ""
 
+		#Lastmodel vs OldGeneration
 		if choice == "A" or choice == "a":
 			oldgeneration_model = fileoperations.find_last_edited_file(PATH_TO_OLD_GENERATION_MODEL_DIR)
 			choice2 = input("Last trained model White(W) or Black(B) ?")
@@ -398,15 +399,15 @@ if __name__ == '__main__':
 			humanVsComputer = choice
 
 		agent = dqn.Agent(None, device)	#strategy is none since epsilon greedy strategy is not required in test mode. We don't explore.
-
+		
 		if last_trained_model is not None:
 			print("***Last trained model: " + last_trained_model)
 			checkpoint = torch.load(last_trained_model, map_location=device)
 			#If humanVsComputer, load white and black model from last trained model.
 			#Else, load white or black from last trained model according to last model color choice (choice2)
-			if choice2 == 'W' or choice2 == 'w' or humanVsComputer != None:
+			if choice2 == 'W' or choice2 == 'w' or (humanVsComputer == 'B' or humanVsComputer == 'b'):
 				White_policy_net.load_state_dict(checkpoint['White_model_state_dict'])
-			elif (choice2 != 'W' and choice2 != "w") or humanVsComputer != None:
+			elif choice2 == 'B' or choice2 == "b" or (humanVsComputer == 'W' or humanVsComputer == 'w'):
 				Black_policy_net.load_state_dict(checkpoint['Black_model_state_dict'])
 			del checkpoint
 		else:
